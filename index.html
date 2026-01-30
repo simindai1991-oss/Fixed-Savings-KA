@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Special - KA MD Demo</title>
+    
+    <!-- 引入 Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Element Plus 样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <!-- 引入 FontAwesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入 Element Plus 组件库 -->
+    <script src="https://unpkg.com/element-plus"></script>
+
+    <style>
+        /* --- 基础样式 --- */
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f5f7fa; overflow: hidden; }
+        [v-cloak] { display: none; }
+
+        /* --- 布局结构 --- */
+        .app-wrapper { display: flex; flex-direction: column; height: 100vh; }
+        
+        /* 顶部通栏 Header */
+        .top-navbar { height: 60px; background: #fff; border-bottom: 1px solid #e6e6e6; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 1px 4px rgba(0,21,41,.08); z-index: 20; flex-shrink: 0; }
+        
+        /* 侧边栏与主内容容器 */
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* 侧边栏 */
+        .layout-sidebar { width: 220px; background: #fff; border-right: 1px solid #e6e6e6; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+        
+        /* 菜单样式 */
+        .menu-item { height: 48px; display: flex; align-items: center; padding: 0 20px; cursor: pointer; color: #606266; font-size: 14px; transition: all 0.2s; }
+        .menu-item:hover { background-color: #f5f7fa; color: #303133; }
+        .menu-item.active { background-color: #eaf8f1; color: #27B665; border-right: 3px solid #27B665; font-weight: 500; }
+        .menu-icon { width: 24px; text-align: center; margin-right: 8px; }
+        
+        /* 子菜单 */
+        .submenu { background-color: #fff; overflow: hidden; transition: max-height 0.3s; }
+        .submenu-item { padding-left: 52px; height: 40px; display: flex; align-items: center; cursor: pointer; font-size: 13px; color: #606266; }
+        .submenu-item:hover { color: #27B665; }
+        .submenu-item.active { color: #27B665; font-weight: 500; background-color: #f0f9f4; }
+        
+        /* 头部按钮组样式 */
+        .header-btn { padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 500; color: white; display: flex; align-items: center; margin-left: 10px; border: none; cursor: pointer; }
+        .btn-teal { background-color: #2ebea6; } /* Online MD */
+        .btn-green-vvip { background-color: #27B665; } /* KA VVIP */
+        .btn-green-mgr { background-color: #27B665; } /* Manager */
+        .header-icon { font-size: 16px; color: #27B665; margin-left: 15px; cursor: pointer; }
+
+        /* 内容区域 */
+        .content-view { flex: 1; overflow-y: auto; padding: 24px; background-color: #f5f7fa; display: flex; flex-direction: column; }
+        
+        /* 通用卡片 */
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        
+        /* 颜色定义 */
+        .text-opay { color: #27B665; }
+        .bg-opay { background-color: #27B665; }
+        
+        /* Dashboard Card (Top Asset) */
+        .dashboard-card { background: linear-gradient(135deg, #27B665 0%, #1e9e48 100%); color: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(39, 182, 101, 0.2); }
+        
+        /* Portfolio Card Style */
+        .portfolio-card { border: 1px solid #f0f0f0; border-radius: 12px; padding: 0; background: #fff; margin-bottom: 16px; overflow: hidden; transition: transform 0.2s; cursor: pointer; }
+        .portfolio-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #27B665; }
+        .p-card-header { background-color: #f9fdfb; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+        .p-status-badge { background-color: #e6f7ff; color: #1890ff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .p-status-badge.active { background-color: #e6f4ff; color: #1677ff; }
+        /* 状态颜色 */
+        .p-status-badge.liquidating { background-color: #fff7e6; color: #fa8c16; }
+        .p-status-badge.completed { background-color: #f6ffed; color: #52c41a; }
+        .p-status-badge.liquidated { background-color: #fff2f0; color: #ff4d4f; }
+
+        /* 表格样式 */
+        .custom-table { width: 100%; text-align: left; border-collapse: collapse; }
+        .custom-table th { padding: 12px; background-color: #f9fafc; color: #909399; font-weight: 500; font-size: 12px; border-bottom: 1px solid #ebeef5; }
+        .custom-table td { padding: 14px 12px; border-bottom: 1px solid #ebeef5; color: #606266; font-size: 13px; }
+        .custom-table tr:hover td { background-color: #f5f7fa; }
+
+        /* Tabs */
+        .nav-tabs { display: flex; border-bottom: 1px solid #e4e7ed; margin-bottom: 20px; }
+        .nav-tab { padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 500; color: #909399; position: relative; }
+        .nav-tab.active { color: #27B665; }
+        .nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background-color: #27B665; }
+        
+        .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 12px; width: 400px; max-width: 90%; animation: slideIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
+        
+        /* 移动端风格弹窗模拟 */
+        .mobile-modal-header { padding: 15px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; }
+        
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Debugger Style */
+        .debug-panel { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 15px; border-radius: 12px; z-index: 100; font-size: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); width: 220px; transition: opacity 0.3s; }
+        .debug-panel:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div id="app" v-cloak class="app-wrapper">
+
+    <!-- 1. Top Navbar (Header) -->
+    <div class="top-navbar">
+        <div class="flex items-center">
+            <span class="text-3xl font-bold text-opay mr-1">O</span>
+            <span class="text-3xl font-bold text-gray-800">Pay</span>
+        </div>
+        <div class="flex items-center">
+            <button class="header-btn btn-teal">Go Online MD</button>
+            <button class="header-btn btn-green-vvip"><i class="fa-regular fa-gem mr-1"></i> KA VVIP</button>
+            <button class="header-btn btn-green-mgr"><i class="fa-solid fa-headset mr-1"></i> Opay Manager</button>
+            <i class="fa-solid fa-clipboard-list header-icon" title="Orders"></i>
+            <i class="fa-regular fa-bell header-icon" title="Notifications"></i>
+            <div class="flex items-center ml-5 border-l pl-5 h-8">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs mr-2">OD</div>
+                <span class="text-xs text-gray-600 font-medium truncate max-w-[120px]">OPAY DIGITAL SERVICES LIMITED</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Main Layout -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="layout-sidebar">
+            <div class="py-2">
+                <div class="menu-item"><div class="menu-icon"><i class="fa-solid fa-gauge"></i></div>Overview</div>
+                <div class="menu-item"><div class="menu-icon"><i class="fa-solid fa-wallet"></i></div>Balance</div>
+                <div class="menu-item"><div class="menu-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>Settlement</div>
+                <div class="menu-item"><div class="menu-icon"><i class="fa-solid fa-list"></i></div>Transactions</div>
+                
+                <!-- Saving Menu -->
+                <div class="menu-item" @click="toggleMenu('saving')">
+                    <div class="menu-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+                    <span class="flex-1">Saving</span>
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform" :class="{'rotate-180': menuOpen.saving}"></i>
+                </div>
+                <div class="submenu" :style="{ maxHeight: menuOpen.saving ? '100px' : '0' }">
+                    <div class="submenu-item">OWealth</div>
+                    <div class="submenu-item" :class="{ active: currentModule === 'fixed' }" @click="navigate('fixed')">Fixed Savings</div>
+                </div>
+
+                <!-- Branch Savings -->
+                <div class="menu-item" @click="toggleMenu('branch')">
+                    <div class="menu-icon"><i class="fa-solid fa-shop"></i></div>
+                    <span class="flex-1">Branch Savings</span>
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform" :class="{'rotate-180': menuOpen.branch}"></i>
+                </div>
+                <div class="submenu" :style="{ maxHeight: menuOpen.branch ? '100px' : '0' }">
+                    <div class="submenu-item">Branch OWealth</div>
+                    <div class="submenu-item">Branch Fixed Savings</div>
+                </div>
+
+                <div class="menu-item"><div class="menu-icon"><i class="fa-solid fa-gear"></i></div>Settings</div>
+            </div>
+        </div>
+
+        <!-- Content View -->
+        <div class="content-view">
+            <!-- Main Content Area -->
+            <div class="flex-1">
+                <div class="mb-5 flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-800">Fixed Savings</h1>
+                    <span class="text-xs text-gray-400">Server Time: {{ formatDateTime(currentTime) }}</span>
+                </div>
+
+                <!-- TABS -->
+                <div class="nav-tabs">
+                    <div class="nav-tab" :class="{ active: activeTab === 'overview' }" @click="activeTab = 'overview'">Overview</div>
+                    <div class="nav-tab" :class="{ active: activeTab === 'special' }" @click="activeTab = 'special'">Special Offers</div>
+                    <div class="nav-tab" :class="{ active: activeTab === 'history' }" @click="activeTab = 'history'">History</div>
+                </div>
+
+                <!-- TAB 1: OVERVIEW -->
+                <div v-if="activeTab === 'overview'" class="fade-in">
+                    
+                    <!-- Asset Card -->
+                    <div class="dashboard-card">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-green-100 text-xs mb-1">Total Fixed Balance</div>
+                                <div class="text-3xl font-bold mb-4">₦{{ formatNumber(dashboardStats.totalBalance) }}</div>
+                                
+                                <div class="flex gap-8">
+                                    <div>
+                                        <div class="text-green-100 text-xs mb-0.5 flex items-center">
+                                            Total Interest 
+                                            <el-tooltip content="Accumulated interest to be paid at maturity" placement="top">
+                                                <i class="fa-solid fa-circle-info ml-1 cursor-pointer hover:text-white"></i>
+                                            </el-tooltip>
+                                        </div>
+                                        <div class="text-lg font-bold">₦{{ formatNumber(dashboardStats.totalInterest) }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-green-100 text-xs mb-0.5 flex items-center">
+                                            Next Payout Date
+                                            <span class="ml-2 text-green-200 text-[10px] bg-white/10 px-1 rounded">(Interest + Principal paid at maturity)</span>
+                                        </div>
+                                        <div class="text-lg font-bold">{{ dashboardStats.nextMaturity || '--' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white text-2xl">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- My Portfolios -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-bold text-gray-700 pl-1 border-l-4 border-green-500">My Portfolios</h3>
+                        </div>
+
+                        <div v-if="activePortfolioList.length > 0">
+                            <div v-for="item in activePortfolioList" :key="item.id" 
+                                class="portfolio-card" 
+                                @click="openPortfolioDetails(item)">
+                                <div class="p-card-header">
+                                    <div class="flex items-center">
+                                        <div class="w-6 h-6 rounded bg-green-100 flex items-center justify-center text-opay mr-3">
+                                            <i class="fa-solid fa-lock text-xs"></i>
+                                        </div>
+                                        <span class="font-bold text-gray-700 text-sm">{{ item.productName }}</span>
+                                    </div>
+                                    <!-- 状态标签 -->
+                                    <span class="p-status-badge"
+                                        :class="{
+                                            'active': item.status === 'Investing',
+                                            'liquidating': item.status === 'Liquidating'
+                                        }">
+                                        {{ item.status }}
+                                    </span>
+                                </div>
+                                <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <div class="text-xs text-gray-400 mb-1">Amount (₦)</div>
+                                        <div class="font-bold text-gray-800">₦{{ formatNumber(item.amount) }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-gray-400 mb-1">Total Interest (₦)</div>
+                                        <div class="font-bold text-gray-800">
+                                            ₦{{ formatNumber(item.interest) }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-gray-400 mb-1">Maturity Date</div>
+                                        <div class="font-bold text-gray-800">{{ item.maturityDate }}</div>
+                                    </div>
+                                    <div class="flex items-center justify-end">
+                                        <i class="fa-solid fa-chevron-right text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-center py-10 bg-white rounded-lg border border-gray-100 border-dashed">
+                            <p class="text-gray-400 text-sm">No active plans currently.</p>
+                        </div>
+                    </div>
+
+                    <!-- Fixed Plans (Standard) -->
+                    <div>
+                        <h3 class="text-base font-bold text-gray-700 mb-4 pl-1 border-l-4 border-blue-500">Fixed Plans</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div v-for="plan in standardProducts" :key="plan.days" 
+                                @click="openStandardBuyModal(plan)"
+                                class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer group hover:border-green-200">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-gray-500 text-xs mb-1">Lock for</div>
+                                        <div class="text-xl font-bold text-gray-800 mb-2">{{ plan.days }} Days</div>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-green-50 flex items-center justify-center text-gray-300 group-hover:text-green-500 transition-colors">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="flex items-end">
+                                    <span class="text-2xl font-bold text-opay group-hover:scale-105 transition-transform">{{ plan.rate }}%</span>
+                                    <span class="text-xs text-gray-400 mb-1 ml-1">p.a.</span>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center">
+                                    <span class="text-xs text-gray-400">Min ₦1,000</span>
+                                    <span class="text-xs text-green-600 font-medium group-hover:underline">Create Plan</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: SPECIAL OFFERS -->
+                <div v-if="activeTab === 'special'" class="fade-in">
+                    <div class="flex items-center mb-6">
+                        <h3 class="text-base font-bold text-gray-700 pl-1 border-l-4 border-orange-400">Limited Time Offers</h3>
+                        <span class="ml-2 px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-bold">High Yield</span>
+                    </div>
+                    
+                    <div v-if="visibleSpecialProducts.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="product in visibleSpecialProducts" :key="product.id" 
+                            class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow relative">
+                            <div class="bg-green-50 px-4 py-2 flex justify-between items-center text-xs">
+                                <span class="text-gray-600 font-medium">Internal Beta Product</span>
+                                <span class="text-red-500 font-bold" v-if="product.status !== 'sold_out'">{{ product.countdown }} left</span>
+                                <span class="text-gray-400" v-else>Ended</span>
+                            </div>
+                            <div class="p-5">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <div class="text-3xl font-extrabold text-opay">{{ product.rate }}% <span class="text-sm font-normal text-gray-400 line-through">{{ product.benchmarkRate }}%</span></div>
+                                        <div class="text-xs text-gray-400 mt-1">Interest p.a.</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-gray-800">{{ product.duration }}d</div>
+                                        <div class="text-xs text-gray-400 mt-1">Duration</div>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span class="text-gray-500">
+                                            Quota: <span class="font-mono">₦{{ formatShortNumber(product.remainingQuota) }}</span> / <span class="text-gray-300">₦{{ formatShortNumber(product.totalSize) }}</span>
+                                        </span>
+                                        <span :class="getQuotaColor(product)">{{ getQuotaText(product) }}</span>
+                                    </div>
+                                    <div class="bg-gray-100 rounded-full h-1.5 w-full overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-500" :class="getQuotaBarColor(product)" :style="{ width: getQuotaPercentage(product) + '%' }"></div>
+                                    </div>
+                                </div>
+                                <button @click="openBuyModal(product)" :disabled="product.status === 'sold_out'" class="w-full py-2.5 rounded-lg font-bold text-sm transition-colors" :class="product.status === 'sold_out' ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-opay text-white hover:bg-green-600 shadow-md shadow-green-100'">
+                                    {{ product.status === 'sold_out' ? 'Sold Out' : 'Save Now' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Empty State for Expired Offers -->
+                    <div v-else class="text-center py-20 bg-white rounded-lg border border-gray-100 border-dashed">
+                        <div class="text-6xl text-gray-200 mb-4"><i class="fa-regular fa-clock"></i></div>
+                        <p class="text-gray-500 font-medium">No Special Offers Available</p>
+                        <p class="text-gray-400 text-xs mt-2">All limited time offers have expired. Check back later!</p>
+                    </div>
+                </div>
+
+                <!-- TAB 3: HISTORY -->
+                <div v-if="activeTab === 'history'" class="fade-in">
+                    <div class="card p-0 overflow-hidden">
+                        <table class="custom-table">
+                            <thead>
+                                <tr><th>ID</th><th>Type</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="log in historyList" :key="log.id">
+                                    <td class="font-mono text-xs">{{ log.id }}</td>
+                                    <td>{{ log.type }}</td>
+                                    <td>{{ log.product }}</td>
+                                    <td :class="log.type === 'Payout' ? 'text-green-600 font-bold' : ''">
+                                        {{ log.type === 'Payout' ? '+' : '' }}₦{{ formatNumber(log.amount) }}
+                                    </td>
+                                    <td><span class="px-2 py-1 rounded text-xs" :class="log.status === 'Success' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">{{ log.status }}</span></td>
+                                    <td class="text-gray-500 text-xs">{{ log.date }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Service Declaration -->
+            <div class="mt-10 mb-4 text-center flex justify-center items-center text-xs text-opay/80 font-medium">
+                <i class="fa-solid fa-shield-halved mr-1.5 text-sm"></i>
+                Powered by OPay Microfinance Bank.
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DEBUGGER ===== -->
+    <div class="debug-panel">
+        <div class="flex justify-between items-center mb-3">
+            <div class="font-bold text-green-400"><i class="fa-solid fa-bug mr-1"></i>Time Travel</div>
+            <button @click="resetTime()" class="text-xs bg-red-500/20 text-red-300 px-2 py-0.5 rounded hover:bg-red-500/40">Reset</button>
+        </div>
+        <div class="mb-3 text-gray-300 font-mono text-center bg-black/30 py-2 rounded border border-gray-700">
+            {{ formatDateTime(currentTime) }}
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+            <button @click="advanceTime(1)" class="bg-gray-700 hover:bg-gray-600 px-1 py-2 rounded text-[10px]">+1 Day</button>
+            <button @click="advanceTime(7)" class="bg-gray-700 hover:bg-gray-600 px-1 py-2 rounded text-[10px]">+7 Days</button>
+            <button @click="advanceTime(30)" class="bg-gray-700 hover:bg-gray-600 px-1 py-2 rounded text-[10px]">+30 Days</button>
+        </div>
+        <div class="mt-3 text-[10px] text-gray-500 leading-tight">
+            * Advancing time affects maturity, liquidation processing, and offer expiry.
+        </div>
+    </div>
+
+    <!-- ===== MODALS ===== -->
+
+    <!-- 1. BUY MODAL -->
+    <div v-if="showBuyModal" class="modal-mask" @click.self="closeBuyModal">
+        <div class="modal-content overflow-hidden">
+            <div class="bg-opay p-4 text-white relative">
+                <i class="fa-solid fa-xmark absolute top-4 right-4 cursor-pointer" @click="closeBuyModal"></i>
+                <h3 class="text-lg font-bold">Save Amount (₦)</h3>
+                <div class="text-xs opacity-80 mt-1">
+                    <span v-if="selectedProduct?.isStandard">Unlimited Quota</span>
+                    <!-- Dynamic limit display logic -->
+                    <span v-else>Min: ₦10,000.00 - Max: ₦{{ formatNumber(calculateUserRemainingQuota(selectedProduct)) }}</span>
+                </div>
+            </div>
+            
+            <!-- LIMIT REACHED STATE -->
+            <div v-if="!selectedProduct.isStandard && calculateUserRemainingQuota(selectedProduct) < 10000" class="p-8 text-center">
+                <div class="text-4xl text-gray-300 mb-4"><i class="fa-solid fa-ban"></i></div>
+                <h3 class="font-bold text-gray-700 mb-2">Purchase Limit Reached</h3>
+                <p class="text-gray-500 text-sm mb-6">You have reached your purchase limit for this product. Please explore our other available products.</p>
+                <button @click="closeBuyModal" class="w-full bg-gray-100 text-gray-600 py-3 rounded-full font-bold hover:bg-gray-200">Close</button>
+            </div>
+
+            <!-- NORMAL BUY STATE -->
+            <div v-else class="p-6">
+                <input type="number" v-model.number="investmentAmount" 
+                       @input="validateInput"
+                       class="w-full text-3xl font-bold text-gray-800 border-b-2 border-green-500 focus:outline-none py-2 mb-1" 
+                       placeholder="0.00">
+                <!-- 错误提示 -->
+                <div v-if="inputError" class="text-red-500 text-xs mb-6 font-medium">{{ inputError }}</div>
+                <div v-else class="mb-6"></div>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-4" v-if="selectedProduct">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Expected Return on {{ calculateMaturityDate(selectedProduct.duration) }}</div>
+                    <div class="flex justify-between text-sm mb-2"><span class="text-gray-500">Principal</span><span class="font-bold">₦{{ formatNumber(investmentAmount || 0) }}</span></div>
+                    <div v-if="!selectedProduct.isStandard" class="flex justify-between text-sm mb-2"><span class="text-gray-500">Interest (normal offer)</span><span class="font-medium line-through text-gray-400">₦{{ formatNumber(calculations.normalInterest) }}</span></div>
+                    <div class="flex justify-between text-sm mb-3"><span class="text-gray-500">Interest {{ !selectedProduct.isStandard ? '(special offer)' : '' }}</span><span class="font-bold text-gray-800">₦{{ formatNumber(calculations.totalInterest) }}</span></div>
+                    <div class="border-t border-dashed border-gray-300 pt-2 flex justify-between items-center text-opay"><span class="font-medium">Total Return</span><span class="font-bold text-xl">₦{{ formatNumber((investmentAmount || 0) + calculations.totalInterest) }}</span></div>
+                </div>
+
+                <!-- Disclaimer Text (Added) -->
+                <div class="text-[10px] text-gray-400 leading-tight mb-6 bg-yellow-50/50 p-2 rounded border border-yellow-100">
+                    ₦{{ formatNumber(investmentAmount || 0) }} will be deposited until {{ calculateMaturityDate(selectedProduct.duration) }}. Actual duration and interest may vary based on the maturity date. If you wish to liquidate your funds, 100% of interest earned will be deducted, the payout amount will be paid to your OWealth balance within 48 hours after you submitted your liquidation application.
+                </div>
+
+                <button @click="processPayment" :disabled="!!inputError || !investmentAmount || investmentAmount <= 0" class="w-full bg-opay text-white py-3 rounded-full font-bold text-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed">Save Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SUCCESS MODAL (Buy) -->
+    <div v-if="showSuccessModal" class="modal-mask">
+        <div class="modal-content p-8 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-opay text-3xl"><i class="fa-solid fa-check"></i></div>
+            <div class="text-2xl font-bold text-gray-800 mb-2">₦{{ formatNumber(investmentAmount) }}</div>
+            <div class="text-gray-500 mb-8">Deposit Successful</div>
+            <button @click="closeSuccessModal" class="w-full bg-opay text-white py-3 rounded-full font-bold">Done</button>
+        </div>
+    </div>
+
+    <!-- 3. PORTFOLIO DETAIL MODAL -->
+    <div v-if="showPortfolioModal && selectedPortfolioItem" class="modal-mask" @click.self="showPortfolioModal = false">
+        <div class="modal-content overflow-hidden">
+            <!-- Header -->
+            <div class="mobile-modal-header bg-white">
+                <i class="fa-solid fa-chevron-left text-gray-400 cursor-pointer" @click="showPortfolioModal = false"></i>
+                <span class="text-gray-800 text-sm">Fixed {{ selectedPortfolioItem.productName }}</span>
+                <i class="fa-solid fa-xmark text-gray-400 cursor-pointer" @click="showPortfolioModal = false"></i>
+            </div>
+            
+            <div class="p-5 overflow-y-auto max-h-[70vh]">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-gray-500">Amount</span>
+                    <span class="text-xl font-bold text-gray-800">₦{{ formatNumber(selectedPortfolioItem.amount) }}</span>
+                </div>
+
+                <div class="space-y-4 text-sm text-gray-600">
+                    <div class="flex justify-between">
+                        <span>Duration (Days)</span>
+                        <span class="text-gray-800">{{ selectedPortfolioItem.duration }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Maturity Date</span>
+                        <span class="text-gray-800">{{ selectedPortfolioItem.maturityDate }}</span>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <span>Interest Rate</span>
+                        <div class="text-right">
+                            <div class="text-gray-800">{{ selectedPortfolioItem.rate }}% annually</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center pt-2">
+                        <span>Payback to your</span>
+                        <span class="text-opay font-medium flex items-center">OWealth <i class="fa-solid fa-chevron-right text-xs ml-1"></i></span>
+                    </div>
+                    
+                    <div v-if="selectedPortfolioItem.status === 'Investing'">
+                        <div class="flex justify-between">
+                            <span>Interest (before tax)</span>
+                            <span class="text-gray-800 font-medium">₦{{ formatNumber(selectedPortfolioItem.interest * 1.1) }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Withholding Tax <i class="fa-regular fa-circle-question text-gray-400"></i></span>
+                            <span class="text-gray-800">₦{{ formatNumber(selectedPortfolioItem.interest * 0.1) }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Interest (after tax)</span>
+                            <span class="text-gray-800 font-bold">₦{{ formatNumber(selectedPortfolioItem.interest) }}</span>
+                        </div>
+                        <div class="border-t border-gray-100 my-3 pt-3 flex justify-between items-center">
+                            <span class="font-medium text-gray-800">Total Payback(₦)</span>
+                            <div class="text-right">
+                                <div class="text-opay font-bold text-lg">₦{{ formatNumber(selectedPortfolioItem.amount + selectedPortfolioItem.interest) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liquidate Button (Only when Investing) -->
+                <button v-if="selectedPortfolioItem.status === 'Investing'" 
+                        @click="openLiquidateModal" 
+                        class="w-full mt-6 py-3 border border-opay text-opay rounded-full font-bold hover:bg-green-50 transition-colors">
+                    Liquidate
+                </button>
+                
+                <div v-if="selectedPortfolioItem.status === 'Liquidating'" 
+                     class="w-full mt-6 py-3 bg-orange-50 text-orange-500 rounded-full font-bold text-center">
+                    Processing Liquidation...
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <h4 class="font-bold text-gray-800 text-sm mb-3">Recent activities</h4>
+                    <div class="flex justify-between items-center text-xs">
+                        <div>
+                            <div class="text-gray-800">Create a plan</div>
+                            <div class="text-gray-400 mt-1">{{ selectedPortfolioItem.createTime }}</div>
+                        </div>
+                        <div class="font-medium">₦{{ formatNumber(selectedPortfolioItem.amount) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. LIQUIDATE CONFIRMATION MODAL -->
+    <div v-if="showLiquidateModal" class="modal-mask" @click.self="showLiquidateModal = false">
+        <div class="modal-content overflow-hidden">
+            <div class="mobile-modal-header bg-white">
+                <i class="fa-solid fa-xmark text-white"></i> <!-- spacer -->
+                <span>Liquidate</span>
+                <i class="fa-solid fa-xmark text-gray-400 cursor-pointer" @click="showLiquidateModal = false"></i>
+            </div>
+            
+            <div class="p-6 text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">₦{{ formatNumber(selectedPortfolioItem.amount) }}</h2>
+                
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Payback to your</span>
+                        <span class="text-opay">OWealth</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Maturity Date</span>
+                        <span class="text-gray-800">{{ selectedPortfolioItem.maturityDate }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Amount</span>
+                        <span class="text-gray-800 font-medium">₦{{ formatNumber(selectedPortfolioItem.amount) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Interest</span>
+                        <span class="text-gray-800">+₦{{ formatNumber(liquidateCalc.accruedInterest) }}</span>
+                    </div>
+                    <div class="flex justify-between text-red-500 font-medium">
+                        <span>Interest lost</span>
+                        <span>-₦{{ formatNumber(liquidateCalc.accruedInterest) }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-yellow-50 text-yellow-600 text-xs p-3 rounded text-left">
+                    If you liquidate before {{ selectedPortfolioItem.maturityDate }}, you will lose all the interest accrued.
+                </div>
+
+                <button @click="processLiquidation" class="w-full mt-6 bg-opay text-white py-3 rounded-lg font-bold hover:bg-green-600">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. LIQUIDATE SUCCESS MODAL -->
+    <div v-if="showLiquidateSuccessModal" class="modal-mask">
+        <div class="modal-content overflow-hidden">
+            <div class="mobile-modal-header bg-white border-none">
+                <div></div>
+                <div class="text-lg font-bold">Submitted</div>
+                <i class="fa-solid fa-xmark text-gray-400 cursor-pointer" @click="closeLiquidateSuccess"></i>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4 text-sm mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Payback to your</span>
+                        <span class="text-opay">OWealth</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Amount</span>
+                        <span class="font-bold text-gray-800">₦{{ formatNumber(selectedPortfolioItem.amount) }}</span>
+                    </div>
+                    <!-- Payback Date -->
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Payback Date</span>
+                        <span class="text-gray-800">{{ paybackDate }}</span>
+                    </div>
+                </div>
+
+                <div class="bg-green-50 p-3 rounded text-xs text-gray-600 leading-relaxed mb-6">
+                    You can make transactions directly from your OWealth, just like your normal OPay balance. Withdrawals are free and instant.
+                </div>
+
+                <button @click="closeLiquidateSuccess" class="w-full bg-opay text-white py-3 rounded-lg font-bold hover:bg-green-600">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const { createApp, ref, computed, watch, onMounted, onUnmounted } = Vue;
+
+    createApp({
+        setup() {
+            // --- TIME & DEBUGGING ---
+            const currentTime = ref(new Date());
+            
+            const formatDateTime = (date) => {
+                return date.toLocaleString('en-GB', { 
+                    day: 'numeric', month: 'short', year: 'numeric', 
+                    hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                });
+            };
+
+            const advanceTime = (days) => {
+                const newDate = new Date(currentTime.value);
+                newDate.setDate(newDate.getDate() + days);
+                currentTime.value = newDate;
+            };
+
+            const resetTime = () => {
+                currentTime.value = new Date();
+                // Reset invested amount logic if needed, strictly speaking we should reset products tracking too
+            };
+
+            // --- DATA ---
+            const standardProducts = [
+                { id: 'std-7', name: 'Standard 7 Days', days: 7, rate: 12, isStandard: true, duration: 7, benchmarkRate: 12, minAmount: 1000 },
+                { id: 'std-60', name: 'Standard 60 Days', days: 60, rate: 13, isStandard: true, duration: 60, benchmarkRate: 13, minAmount: 1000 },
+                { id: 'std-180', name: 'Standard 180 Days', days: 180, rate: 14, isStandard: true, duration: 180, benchmarkRate: 14, minAmount: 1000 },
+                { id: 'std-365', name: 'Standard 365 Days', days: 365, rate: 15, isStandard: true, duration: 365, benchmarkRate: 15, minAmount: 1000 }
+            ];
+
+            const specialProducts = ref([
+                {
+                    id: 2026,
+                    code: '2026-JAN',
+                    name: 'Fixed January 2026 Special',
+                    rate: 22.0,
+                    benchmarkRate: 15.0,
+                    duration: 30,
+                    minAmount: 10000, 
+                    totalSize: 5000000000, 
+                    remainingQuota: 3500000000,
+                    status: 'open',
+                    endDate: new Date(Date.now() + 29 * 24 * 60 * 60 * 1000), 
+                    isStandard: false,
+                    maxUserLimit: 300000,
+                    currentUserInvested: 0 // Track per product
+                },
+                {
+                    id: 2027,
+                    code: 'STARTER',
+                    name: 'Starter Special Offer',
+                    rate: 20.0,
+                    benchmarkRate: 15.0,
+                    duration: 14,
+                    minAmount: 10000,
+                    totalSize: 50000000,
+                    remainingQuota: 2000000,
+                    status: 'open',
+                    endDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+                    isStandard: false,
+                    maxUserLimit: 300000,
+                    currentUserInvested: 0
+                }
+            ]);
+
+            const visibleSpecialProducts = computed(() => {
+                return specialProducts.value.filter(p => p.endDate > currentTime.value && p.status !== 'sold_out');
+            });
+
+            // Portfolio Data
+            const portfolioList = ref([
+                { 
+                    id: 1, 
+                    productName: 'Fixed 27/01/2026', 
+                    status: 'Investing', 
+                    amount: 301000, 
+                    interest: 864.16, 
+                    rate: 15,
+                    duration: 7,
+                    createTime: '27 Jan 2026 19:58:16',
+                    maturityDate: '03 Feb 2026', 
+                    rawMaturityDate: new Date('2026-02-03T00:00:00'),
+                    payoutProcessed: false
+                }
+            ]);
+            
+            // Computed to filter out Completed/Liquidated from view, but keep data
+            const activePortfolioList = computed(() => {
+                return portfolioList.value.filter(item => 
+                    item.status === 'Investing' || item.status === 'Liquidating'
+                );
+            });
+
+            const historyList = ref([
+                 { id: 'TXN8839201', type: 'Deposit', product: 'Fixed 27/01/2026', amount: 301000, status: 'Success', date: '2026-01-27 10:30:00' }
+            ]);
+
+            // --- WATCHERS FOR TIME-BASED LOGIC ---
+            watch(currentTime, (newTime) => {
+                // 1. Check Maturity
+                portfolioList.value.forEach(item => {
+                    if (item.status === 'Investing' && !item.payoutProcessed && newTime >= item.rawMaturityDate) {
+                        item.status = 'Completed';
+                        item.payoutProcessed = true;
+                        
+                        // Add Payout (Principal + Interest)
+                        historyList.value.unshift({
+                            id: 'PAY' + Math.floor(Math.random()*1000000),
+                            type: 'Payout',
+                            product: item.productName,
+                            amount: item.amount + item.interest,
+                            status: 'Success',
+                            date: formatDateTime(newTime)
+                        });
+                    }
+                });
+
+                // 2. Check Liquidation Completion
+                portfolioList.value.forEach(item => {
+                    if (item.status === 'Liquidating' && !item.payoutProcessed && item.liquidationCompletionDate && newTime >= item.liquidationCompletionDate) {
+                        item.status = 'Liquidated';
+                        item.payoutProcessed = true;
+
+                        // Add Payout (Principal ONLY)
+                        historyList.value.unshift({
+                            id: 'LIQ_PAY' + Math.floor(Math.random()*1000000),
+                            type: 'Payout',
+                            product: item.productName,
+                            amount: item.amount,
+                            status: 'Success',
+                            date: formatDateTime(newTime)
+                        });
+                    }
+                });
+
+                // 3. Update Countdowns
+                specialProducts.value.forEach(p => {
+                    if (p.status === 'sold_out') { p.countdown = ''; return; }
+                    const diff = p.endDate - newTime;
+                    if (diff > 0) {
+                        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        p.countdown = `${d}d ${h}h ${m}m`;
+                    } else {
+                        p.countdown = 'Expired';
+                    }
+                });
+            });
+
+            // --- UI LOGIC ---
+            const menuOpen = ref({ saving: true, branch: false });
+            const currentModule = ref('fixed');
+            const activeTab = ref('overview');
+
+            const dashboardStats = computed(() => {
+                let totalBalance = 0;
+                let totalInterest = 0;
+                let nextMaturity = null;
+                let minDate = null;
+
+                // Loop through ALL items to calculate stats (active balance, all interest)
+                portfolioList.value.forEach(item => {
+                    if (item.status === 'Investing' || item.status === 'Liquidating') {
+                        totalBalance += item.amount;
+                        // For active items, add expected interest
+                        totalInterest += item.interest; 
+                        
+                        if (item.rawMaturityDate && item.status === 'Investing') {
+                            if (!minDate || item.rawMaturityDate < minDate) {
+                                minDate = item.rawMaturityDate;
+                                nextMaturity = item.maturityDate;
+                            }
+                        }
+                    } else if (item.status === 'Completed') {
+                        // For completed items, interest was earned
+                        totalInterest += item.interest;
+                    }
+                    // Liquidated items have 0 interest earned, so nothing added
+                });
+                return { totalBalance, totalInterest, nextMaturity };
+            });
+
+            const showBuyModal = ref(false);
+            const showSuccessModal = ref(false);
+            const showPortfolioModal = ref(false);
+            const selectedPortfolioItem = ref(null);
+            const showLiquidateModal = ref(false);
+            const showLiquidateSuccessModal = ref(false);
+            const paybackDate = ref('');
+            
+            const selectedProduct = ref(null);
+            const investmentAmount = ref(null);
+            const inputError = ref(null);
+
+            // New Helper to calculate remaining quota for a product
+            const calculateUserRemainingQuota = (prod) => {
+                if (prod.isStandard) return 9999999999;
+                return Math.max(0, prod.maxUserLimit - prod.currentUserInvested);
+            };
+
+            const calculations = computed(() => {
+                if (!investmentAmount.value || !selectedProduct.value) return { normalInterest: 0, totalInterest: 0 };
+                const p = investmentAmount.value;
+                const t = selectedProduct.value.duration;
+                const normal = p * (selectedProduct.value.benchmarkRate / 100) * (t / 365);
+                const special = p * (selectedProduct.value.rate / 100) * (t / 365);
+                return { normalInterest: Math.floor(normal), totalInterest: Math.floor(special) };
+            });
+
+            const liquidateCalc = computed(() => {
+                if (!selectedPortfolioItem.value) return { accruedInterest: 0 };
+                const p = selectedPortfolioItem.value.amount;
+                const rate = selectedPortfolioItem.value.rate / 100;
+                const accrued = (p * rate * 1 / 365).toFixed(2);
+                return { accruedInterest: accrued };
+            });
+
+            const toggleMenu = (key) => { menuOpen.value[key] = !menuOpen.value[key]; };
+            const navigate = (mod) => { currentModule.value = mod; if(mod === 'fixed') activeTab.value = 'overview'; };
+            
+            const formatNumber = (num) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+            const formatShortNumber = (num) => {
+                if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+                if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                return (num / 1000).toFixed(1) + 'K';
+            };
+
+            const getQuotaPercentage = (prod) => prod.status === 'sold_out' ? 0 : (prod.remainingQuota / prod.totalSize) * 100;
+            const getQuotaText = (prod) => {
+                if (prod.status === 'sold_out') return 'Sold Out';
+                return getQuotaPercentage(prod) < 15 ? 'Almost Sold Out' : 'Sufficient';
+            };
+            const getQuotaColor = (prod) => prod.status === 'sold_out' ? 'text-gray-400' : (getQuotaPercentage(prod) < 15 ? 'text-orange-500 font-bold' : 'text-gray-400');
+            const getQuotaBarColor = (prod) => getQuotaPercentage(prod) < 15 ? 'bg-orange-400' : 'bg-opay';
+            
+            const calculateMaturityDate = (days, startDate = currentTime.value) => {
+                const date = new Date(startDate);
+                date.setDate(date.getDate() + days);
+                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            };
+
+            const openBuyModal = (prod) => { 
+                selectedProduct.value = prod; 
+                investmentAmount.value = null; 
+                inputError.value = null;
+                showBuyModal.value = true; 
+            };
+            const openStandardBuyModal = (plan) => { 
+                selectedProduct.value = { ...plan }; 
+                investmentAmount.value = null; 
+                inputError.value = null;
+                showBuyModal.value = true; 
+            };
+            const closeBuyModal = () => { showBuyModal.value = false; };
+            
+            const validateInput = () => {
+                inputError.value = null;
+                if (!investmentAmount.value) return;
+
+                const amount = investmentAmount.value;
+                const min = selectedProduct.value.minAmount; // Should be 10000 for Special
+                const userRemaining = calculateUserRemainingQuota(selectedProduct.value);
+
+                if (amount < min) {
+                    inputError.value = `Minimum investment amount is ₦${formatNumber(min)}.`;
+                } else if (amount > userRemaining) {
+                    // Specific message for Special Offer Max Limit violation
+                    if (!selectedProduct.value.isStandard) {
+                        // Check if it's the fixed 300k ceiling or remaining
+                        if (userRemaining <= 0) {
+                            // This case is handled by the block overlay, but just in case input is active
+                            inputError.value = `You have reached your purchase limit.`; 
+                        } else {
+                            inputError.value = `Maximum investment amount is ₦${formatNumber(userRemaining)}.`;
+                        }
+                    } else {
+                         // Standard product logic (usually unlimited, but if logic changes)
+                        inputError.value = `Amount exceeds limit.`;
+                    }
+                }
+            };
+
+            const processPayment = () => {
+                setTimeout(() => {
+                    showBuyModal.value = false;
+                    showSuccessModal.value = true;
+                    
+                    const now = new Date(currentTime.value);
+                    const maturity = new Date(currentTime.value);
+                    maturity.setDate(maturity.getDate() + selectedProduct.value.duration);
+                    
+                    // Deduct user quota locally if special product
+                    if (!selectedProduct.value.isStandard) {
+                        const targetProd = specialProducts.value.find(p => p.id === selectedProduct.value.id);
+                        if (targetProd) {
+                            targetProd.currentUserInvested += investmentAmount.value;
+                        }
+                    }
+
+                    portfolioList.value.unshift({
+                        id: Date.now(),
+                        productName: selectedProduct.value.name,
+                        status: 'Investing',
+                        amount: investmentAmount.value,
+                        rate: selectedProduct.value.rate,
+                        duration: selectedProduct.value.duration,
+                        createTime: formatDateTime(now),
+                        interest: calculations.value.totalInterest,
+                        maturityDate: calculateMaturityDate(selectedProduct.value.duration, now),
+                        rawMaturityDate: maturity,
+                        payoutProcessed: false
+                    });
+                    
+                    historyList.value.unshift({
+                        id: 'TXN' + Math.floor(Math.random()*1000000),
+                        type: 'Deposit',
+                        product: selectedProduct.value.name,
+                        amount: investmentAmount.value,
+                        status: 'Success',
+                        date: formatDateTime(now)
+                    });
+                }, 1000);
+            };
+            const closeSuccessModal = () => { showSuccessModal.value = false; activeTab.value = 'overview'; };
+
+            const openPortfolioDetails = (item) => {
+                selectedPortfolioItem.value = item;
+                showPortfolioModal.value = true;
+            };
+            
+            const openLiquidateModal = () => {
+                showPortfolioModal.value = false; 
+                showLiquidateModal.value = true;
+            };
+
+            const processLiquidation = () => {
+                // Change status to Liquidating (kept in portfolioList for history tracking, but filtered from view)
+                selectedPortfolioItem.value.status = 'Liquidating';
+                
+                // Calculate completion date (Current Time + 1 Day)
+                const compDate = new Date(currentTime.value);
+                compDate.setDate(compDate.getDate() + 1);
+                selectedPortfolioItem.value.liquidationCompletionDate = compDate;
+                
+                // For UI display in modal
+                paybackDate.value = calculateMaturityDate(1, currentTime.value); 
+
+                showLiquidateModal.value = false;
+                showLiquidateSuccessModal.value = true;
+            };
+
+            const closeLiquidateSuccess = () => {
+                showLiquidateSuccessModal.value = false;
+                activeTab.value = 'overview';
+            };
+
+            const showToast = (msg) => alert(msg);
+
+            // Timer (Real-time ticking also advances simulated time)
+            let timer;
+            onMounted(() => { 
+                timer = setInterval(() => {
+                    // Clock tick logic if needed
+                }, 1000);
+            });
+            onUnmounted(() => clearInterval(timer));
+
+            return {
+                menuOpen, currentModule, activeTab, currentTime,
+                toggleMenu, navigate,
+                standardProducts, visibleSpecialProducts, portfolioList, activePortfolioList, historyList, dashboardStats,
+                formatNumber, formatShortNumber, formatDateTime,
+                getQuotaPercentage, getQuotaText, getQuotaColor, getQuotaBarColor,
+                showBuyModal, showSuccessModal, selectedProduct, investmentAmount, inputError, calculateUserRemainingQuota, calculations,
+                openBuyModal, openStandardBuyModal, closeBuyModal, validateInput, processPayment, closeSuccessModal, calculateMaturityDate, showToast,
+                showPortfolioModal, selectedPortfolioItem, openPortfolioDetails,
+                showLiquidateModal, openLiquidateModal, liquidateCalc, processLiquidation,
+                showLiquidateSuccessModal, closeLiquidateSuccess, paybackDate,
+                advanceTime, resetTime
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
