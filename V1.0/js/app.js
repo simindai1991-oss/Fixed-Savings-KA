@@ -11,6 +11,7 @@ import ServiceFooter from './components/ServiceFooter.js';
 import FixedSavingsView from './views/FixedSavings.js';
 import SavingsSummaryView from './views/Summary.js';
 import BranchFixedView from './views/BranchFixedSavings.js';
+import OpenAccountCaseView from './views/OpenAccountCase.js'; // 引入新视图
 
 const app = createApp({
     components: {
@@ -41,11 +42,12 @@ const app = createApp({
         };
         
         const currentViewComponent = computed(() => {
-            if (currentPage.value === 'fixed-savings' || currentPage.value === 'fixed-savings-branch') {
-                return FixedSavingsView;
-            }
+            // 路由映射
+            if (currentPage.value === 'fixed-savings' || currentPage.value === 'fixed-savings-branch') return FixedSavingsView;
             if (currentPage.value === 'savings-summary') return SavingsSummaryView;
             if (currentPage.value === 'branch-fixed') return BranchFixedView;
+            if (currentPage.value === 'open-account') return OpenAccountCaseView; // 新路由
+            
             return FixedSavingsView;
         });
 
@@ -68,10 +70,7 @@ const app = createApp({
 
         let timer;
         onMounted(() => {
-            // 简单的时钟走动逻辑，可选
-            timer = setInterval(() => {
-                // globalTime.value = new Date(globalTime.value.getTime() + 1000);
-            }, 1000);
+            timer = setInterval(() => {}, 1000);
         });
 
         onUnmounted(() => {
@@ -89,6 +88,8 @@ const app = createApp({
     }
 });
 
-// 注册 Element Plus (使用全局对象)
-app.use(ElementPlus);
+if (window.ElementPlus) {
+    app.use(window.ElementPlus);
+}
+
 app.mount('#app');

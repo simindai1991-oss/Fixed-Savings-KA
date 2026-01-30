@@ -14,11 +14,17 @@ export default {
             <span class="flex-1">Saving</span>
             <i class="fa-solid fa-chevron-down text-xs transition-transform" :class="{'rotate-180': open.saving}"></i>
         </div>
-        <div class="overflow-hidden transition-all bg-white" :style="{ maxHeight: open.saving ? '150px' : '0' }">
+        <div class="overflow-hidden transition-all bg-white" :style="{ maxHeight: open.saving ? '200px' : '0' }">
             <div class="pl-[52px] h-10 flex items-center text-[13px] text-gray-600 cursor-pointer hover:text-opay" 
                  :class="{'text-opay font-medium bg-[#f0f9f4]': currentPage === 'savings-summary'}"
                  @click="$emit('navigate', 'savings-summary')">
                 Summary
+            </div>
+            <!-- 新增：Open Account Case -->
+            <div class="pl-[52px] h-10 flex items-center text-[13px] text-gray-600 cursor-pointer hover:text-opay"
+                 :class="{'text-opay font-medium bg-[#f0f9f4]': currentPage === 'open-account'}"
+                 @click="$emit('navigate', 'open-account')">
+                 Open Account Case
             </div>
             <div class="pl-[52px] h-10 flex items-center text-[13px] text-gray-600 cursor-pointer hover:text-opay">OWealth</div>
             <div class="pl-[52px] h-10 flex items-center text-[13px] text-gray-600 cursor-pointer hover:text-opay" 

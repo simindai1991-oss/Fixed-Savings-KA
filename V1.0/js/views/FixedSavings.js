@@ -1,4 +1,4 @@
-// 【核心修复】移除 import，改用全局 Vue 对象
+// 关键修复：统一使用全局 Vue 对象解构，与 app.js 保持一致
 const { ref, computed, watch } = Vue;
 import { formatNumber, formatShortNumber, formatDateTime, calculateMaturityDate } from '../utils.js';
 
@@ -319,7 +319,7 @@ export default {
         const historyList = ref([{ id: 'TXN8839201', type: 'Deposit', product: 'Fixed 27/01/2026', amount: 301000, status: 'Success', date: '2026-01-27 10:30:00' }]);
 
         // Computed
-        const visibleSpecialProducts = computed(() => specialProducts.value.filter(p => p.endDate > props.currentTime || p.status === 'sold_out')); // Keep sold out visible until user refreshes or we want to hide them
+        const visibleSpecialProducts = computed(() => specialProducts.value.filter(p => p.endDate > props.currentTime || p.status === 'sold_out')); 
         const activePortfolioList = computed(() => portfolioList.value.filter(item => item.status === 'Investing' || item.status === 'Liquidating'));
         
         // Computed: Dynamic tabs
@@ -433,6 +433,25 @@ export default {
         const closeSuccessModal = () => { showSuccessModal.value = false; activeTab.value = 'Overview'; };
         const closeLiquidateSuccess = () => { showLiquidateSuccessModal.value = false; activeTab.value = 'Overview'; };
 
+        // Helper: Update Countdowns logic (Extracted for Watcher & Init)
+        const updateCountdowns = (time) => {
+            specialProducts.value.forEach(p => {
+                if (p.status === 'sold_out') { p.countdown = ''; return; }
+                const diff = p.endDate - time;
+                if (diff > 0) {
+                    const d = Math.floor(diff/(1000*60*60*24));
+                    const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+                    const m = Math.floor((diff%(1000*60*60))/(1000*60));
+                    p.countdown = `${d}d ${h}h ${m}m`;
+                } else {
+                    p.countdown = 'Expired';
+                }
+            });
+        };
+
+        // Initialize Countdowns immediately
+        updateCountdowns(props.currentTime);
+
         // Watchers
         watch(() => props.currentTime, (newTime) => {
             // Maturity Check
@@ -449,15 +468,8 @@ export default {
                     historyList.value.unshift({ id: 'LIQ_PAY'+Math.floor(Math.random()*1000000), type: 'Payout', product: item.productName, amount: item.amount, status: 'Success', date: formatDateTime(newTime) });
                 }
             });
-            // Countdowns
-            specialProducts.value.forEach(p => {
-                if (p.status === 'sold_out') { p.countdown = ''; return; }
-                const diff = p.endDate - newTime;
-                if (diff > 0) {
-                    const d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), m = Math.floor((diff%(1000*60*60))/(1000*60));
-                    p.countdown = `${d}d ${h}h ${m}m`;
-                } else p.countdown = 'Expired';
-            });
+            // Countdowns Update via Watcher
+            updateCountdowns(newTime);
         });
 
         return {
