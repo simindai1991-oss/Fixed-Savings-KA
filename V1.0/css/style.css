@@ -1,0 +1,50 @@
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #f5f7fa; overflow: hidden; }
+[v-cloak] { display: none; }
+
+/* Custom Colors */
+.text-opay { color: #27B665; }
+.bg-opay { background-color: #27B665; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #dcdfe6; border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Animations */
+.fade-in { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Components */
+.dashboard-card { background: linear-gradient(135deg, #27B665 0%, #1e9e48 100%); color: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(39, 182, 101, 0.2); }
+
+.portfolio-card { border: 1px solid #f0f0f0; border-radius: 12px; padding: 0; background: #fff; margin-bottom: 16px; overflow: hidden; transition: transform 0.2s; cursor: pointer; }
+.portfolio-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #27B665; }
+
+.p-card-header { background-color: #f9fdfb; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+
+.p-status-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.p-status-badge.active { background-color: #e6f4ff; color: #1677ff; }
+.p-status-badge.liquidating { background-color: #fff7e6; color: #fa8c16; }
+.p-status-badge.completed { background-color: #f6ffed; color: #52c41a; }
+.p-status-badge.liquidated { background-color: #fff2f0; color: #ff4d4f; }
+
+.custom-table { width: 100%; text-align: left; border-collapse: collapse; }
+.custom-table th { padding: 12px; background-color: #f9fafc; color: #909399; font-weight: 500; font-size: 12px; border-bottom: 1px solid #ebeef5; }
+.custom-table td { padding: 14px 12px; border-bottom: 1px solid #ebeef5; color: #606266; font-size: 13px; }
+.custom-table tr:hover td { background-color: #f5f7fa; }
+
+.nav-tabs { display: flex; border-bottom: 1px solid #e4e7ed; margin-bottom: 20px; }
+.nav-tab { padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 500; color: #909399; position: relative; }
+.nav-tab.active { color: #27B665; }
+.nav-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background-color: #27B665; }
+
+.amount-chip { border: 1px solid #dcdfe6; border-radius: 16px; padding: 4px 12px; font-size: 12px; color: #606266; cursor: pointer; transition: all 0.2s; background: #fff; }
+.amount-chip:hover { border-color: #27B665; color: #27B665; }
+.amount-chip.selected { background-color: #eaf8f1; border-color: #27B665; color: #27B665; font-weight: 500; }
+
+.modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; }
+.modal-content { background: white; border-radius: 12px; width: 400px; max-width: 90%; animation: slideIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
+.mobile-modal-header { padding: 15px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; }
+
+.debug-panel { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.85); color: white; padding: 15px; border-radius: 12px; z-index: 100; font-size: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); width: 220px; transition: opacity 0.3s; }
+.debug-panel:hover { opacity: 1; }

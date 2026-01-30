@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPay KA MD - Fixed Savings</title>
+    
+    <!-- Libraries -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/element-plus"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app" v-cloak class="flex flex-col h-screen">
+        <!-- 头部 -->
+        <top-navbar></top-navbar>
+
+        <div class="flex flex-1 overflow-hidden">
+            <!-- 侧边栏 -->
+            <side-menu 
+                :current-page="currentPage" 
+                @navigate="handleNavigation">
+            </side-menu>
+
+            <!-- 主内容区 -->
+            <main class="flex-1 overflow-y-auto bg-[#f5f7fa] p-6 relative">
+                
+                <!-- 动态组件渲染 (使用 v-bind="currentViewProps" 动态传参) -->
+                <component 
+                    :is="currentViewComponent" 
+                    v-bind="currentViewProps">
+                </component>
+
+                <!-- 页脚 -->
+                <service-footer></service-footer>
+            </main>
+        </div>
+
+        <!-- 调试器 -->
+        <time-travel-debugger 
+            :current-time="globalTime" 
+            @update:time="updateGlobalTime">
+        </time-travel-debugger>
+    </div>
+
+    <!-- Main Entry Script -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
