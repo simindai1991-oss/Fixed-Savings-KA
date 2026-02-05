@@ -1,6 +1,5 @@
 const { ref, computed, watch } = Vue;
 import { formatNumber, formatShortNumber, formatDateTime, calculateMaturityDate } from '../utils.js';
-// 引入配置文件
 import { STANDARD_PRODUCTS, getSpecialProducts } from '../config.js';
 
 export default {
@@ -191,15 +190,17 @@ export default {
                     <div v-else class="mb-6"></div>
                     
                     <div class="bg-gray-50 rounded-lg p-4 mb-4" v-if="selectedProduct">
-                        <div class="text-xs font-bold text-gray-500 uppercase mb-3">Expected Return on {{ calculateMaturityDate(selectedProduct.duration) }}</div>
+                        <!-- 修复点 1：显式传递 currentTime 到 calculateMaturityDate -->
+                        <div class="text-xs font-bold text-gray-500 uppercase mb-3">Expected Return on {{ calculateMaturityDate(selectedProduct.duration, currentTime) }}</div>
                         <div class="flex justify-between text-sm mb-2"><span class="text-gray-500">Principal</span><span class="font-bold">₦{{ formatNumber(investmentAmount || 0) }}</span></div>
                         <div v-if="!selectedProduct.isStandard" class="flex justify-between text-sm mb-2"><span class="text-gray-500">Interest (normal offer)</span><span class="font-medium line-through text-gray-400">₦{{ formatNumber(calculations.normalInterest) }}</span></div>
                         <div class="flex justify-between text-sm mb-3"><span class="text-gray-500">Interest {{ !selectedProduct.isStandard ? '(special offer)' : '' }}</span><span class="font-bold text-gray-800">₦{{ formatNumber(calculations.totalInterest) }}</span></div>
                         <div class="border-t border-dashed border-gray-300 pt-2 flex justify-between items-center text-opay"><span class="font-medium">Total Return</span><span class="font-bold text-xl">₦{{ formatNumber((investmentAmount || 0) + calculations.totalInterest) }}</span></div>
                     </div>
 
+                    <!-- 修复点 2：显式传递 currentTime -->
                     <div class="text-[10px] text-gray-400 leading-tight mb-6 bg-yellow-50/50 p-2 rounded border border-yellow-100">
-                        ₦{{ formatNumber(investmentAmount || 0) }} will be deposited until {{ calculateMaturityDate(selectedProduct.duration) }}. Actual duration and interest may vary based on the maturity date. If you wish to liquidate your funds, 100% of interest earned will be deducted, the payout amount will be paid to your OWealth balance within 48 hours after you submitted your liquidation application.
+                        ₦{{ formatNumber(investmentAmount || 0) }} will be deposited until {{ calculateMaturityDate(selectedProduct.duration, currentTime) }}. Actual duration and interest may vary based on the maturity date. If you wish to liquidate your funds, 100% of interest earned will be deducted, the payout amount will be paid to your OWealth balance within 48 hours after you submitted your liquidation application.
                     </div>
 
                     <button @click="processPayment" :disabled="!!inputError || !investmentAmount || investmentAmount <= 0" class="w-full bg-opay text-white py-3 rounded-full font-bold text-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed">Save Now</button>
@@ -288,9 +289,12 @@ export default {
     `,
     setup(props) {
         const activeTab = ref('Overview');
-        // 使用配置数据初始化
         const standardProducts = STANDARD_PRODUCTS;
-        const specialProducts = ref(getSpecialProducts()); // 函数调用获取带最新日期的列表
+        // Use a function to get fresh dates from config if possible, or just ref the constant if it's static enough
+        // Ideally config should export a function for dynamic dates, but for now we assume config loaded
+        // Let's re-use the getSpecialProducts function from config if available, or just the array
+        const specialProducts = ref(getSpecialProducts()); 
+        
         const portfolioList = ref([{ id: 1, productName: 'Fixed 27/01/2026', status: 'Investing', amount: 301000, interest: 864.16, rate: 15, duration: 7, createTime: '27 Jan 2026 19:58:16', maturityDate: '03 Feb 2026', rawMaturityDate: new Date('2026-02-03T00:00:00'), payoutProcessed: false }]);
         const historyList = ref([{ id: 'TXN8839201', type: 'Deposit', product: 'Fixed 27/01/2026', amount: 301000, status: 'Success', date: '2026-01-27 10:30:00' }]);
 
