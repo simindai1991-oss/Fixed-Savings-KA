@@ -1,6 +1,7 @@
-// 【核心修复】移除 import，改用全局 Vue 对象
 const { ref, computed } = Vue;
 import { formatNumber } from '../utils.js';
+// 引入配置文件
+import { MOCK_BRANCH_LIST } from '../config.js';
 
 export default {
     emits: ['viewBranch'],
@@ -83,17 +84,8 @@ export default {
     setup() {
         const selectedBranch = ref('');
         
-        // Mock Data
-        const branchList = ref([
-            { id: '1100000003', name: 'OPAY DIGITAL SERVICES LIMITED', balance: 42.35, yesterdayInterest: 0, totalInterest: 567.77 },
-            { id: '1200000172', name: 'test merchant 001', balance: 30.00, yesterdayInterest: 0, totalInterest: 0 },
-            { id: '1200000575', name: 'SELECT ALL', balance: 0, yesterdayInterest: 0, totalInterest: 0 },
-            { id: '2200394013', name: 'ONE1029001', balance: 0, yesterdayInterest: 0, totalInterest: 0 },
-            { id: '1200000008', name: 'New Michael Branch', balance: 0, yesterdayInterest: 0, totalInterest: 0 },
-            { id: '1200000010', name: 'michael test', balance: 0, yesterdayInterest: 0, totalInterest: 0 },
-            { id: '2200394015', name: 'ONE1031', balance: 0, yesterdayInterest: 0, totalInterest: 0 },
-            { id: '1200426151', name: 'TWO1030', balance: 0, yesterdayInterest: 0, totalInterest: 0 },
-        ]);
+        // Use Config Data (Filter out "isNew" branches, show existing only)
+        const branchList = ref(MOCK_BRANCH_LIST.filter(b => !b.isNew));
 
         const branchOptions = computed(() => {
             return branchList.value.map(b => ({ id: b.id, name: b.name }));

@@ -1,4 +1,6 @@
 const { ref } = Vue;
+// 引入配置文件
+import { OWEALTH_RATE, FIXED_MAX_RATE } from '../config.js';
 
 export default {
     template: `
@@ -6,7 +8,7 @@ export default {
         <!-- Hero Section -->
         <div class="text-center mb-10">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">Grow Your Wealth with OPay</h1>
-            <p class="text-gray-500">Choose the plan that fits your cashflow. Flexible daily interest or high fixed returns.</p>
+            <p class="text-gray-500">Choose the plan that fits your lifestyle. Flexible daily interest or high fixed returns.</p>
         </div>
 
         <!-- Product Comparison Cards -->
@@ -19,7 +21,7 @@ export default {
                     <i class="fa-solid fa-wallet"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 mb-2">OWealth</h3>
-                <div class="text-3xl font-extrabold text-blue-600 mb-4">5% <span class="text-sm font-normal text-gray-400">p.a.</span></div>
+                <div class="text-3xl font-extrabold text-blue-600 mb-4">{{ OWEALTH_RATE }} <span class="text-sm font-normal text-gray-400">p.a.</span></div>
                 <ul class="space-y-3 text-sm text-gray-600">
                     <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Use it like your regular balance</li>
                     <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Interests paid DAILY</li>
@@ -27,14 +29,14 @@ export default {
                 </ul>
             </div>
 
-            <!-- Fixed Savings Card (样式调整：去掉绿色边框，保持风格统一) -->
+            <!-- Fixed Savings Card -->
             <div class="bg-white rounded-2xl p-8 border-2 border-transparent hover:border-green-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden">
                 <div class="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">High Yield</div>
                 <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-2xl mb-6 group-hover:scale-110 transition-transform">
                     <i class="fa-solid fa-piggy-bank"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 mb-2">Fixed Savings</h3>
-                <div class="text-3xl font-extrabold text-green-600 mb-4">Up to 15% <span class="text-sm font-normal text-gray-400">p.a.</span></div>
+                <div class="text-3xl font-extrabold text-green-600 mb-4">Up to {{ FIXED_MAX_RATE }} <span class="text-sm font-normal text-gray-400">p.a.</span></div>
                 <ul class="space-y-3 text-sm text-gray-600">
                     <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Massive returns for locked funds</li>
                     <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> Duration: 7 days to 1 year</li>
@@ -69,7 +71,6 @@ export default {
             isProcessing.value = true;
             setTimeout(() => {
                 isProcessing.value = false;
-                // 模拟开户成功
                 alert('开户申请提交流程与原来一致，跳转去开户流程即可。');
             }, 1500);
         };
@@ -77,7 +78,9 @@ export default {
         return {
             isChecked,
             isProcessing,
-            openAccount
+            openAccount,
+            OWEALTH_RATE,
+            FIXED_MAX_RATE
         };
     }
 }

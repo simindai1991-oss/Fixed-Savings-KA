@@ -17,6 +17,12 @@
 </head>
 <body>
     <div id="app" v-cloak class="flex flex-col h-screen">
+        <!-- ⚠️ DEMO 演示模式警告横幅 -->
+        <div class="bg-yellow-100 border-b border-yellow-200 text-yellow-800 px-4 py-2 text-center text-xs font-bold flex justify-center items-center gap-2 z-50">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>DEMO MODE: This is a demonstration environment. All data and parameters are for reference only and do not constitute a product commitment.</span>
+        </div>
+
         <!-- 头部 -->
         <top-navbar></top-navbar>
 
@@ -30,7 +36,7 @@
             <!-- 主内容区 -->
             <main class="flex-1 overflow-y-auto bg-[#f5f7fa] p-6 relative">
                 
-                <!-- 动态组件渲染 (使用 v-bind="currentViewProps" 动态传参) -->
+                <!-- 动态组件渲染 -->
                 <component 
                     :is="currentViewComponent" 
                     v-bind="currentViewProps">

@@ -1,6 +1,7 @@
-// 关键修复：统一使用全局 Vue 对象解构，与 app.js 保持一致
 const { ref, computed, watch } = Vue;
 import { formatNumber, formatShortNumber, formatDateTime, calculateMaturityDate } from '../utils.js';
+// 引入配置文件
+import { STANDARD_PRODUCTS, getSpecialProducts } from '../config.js';
 
 export default {
     props: ['currentTime', 'branchName'],
@@ -9,13 +10,11 @@ export default {
         <!-- Header Section -->
         <div class="mb-5 flex justify-between items-center">
             <div class="flex items-center">
-                <!-- Back Button for Branch View -->
                 <div v-if="branchName" @click="$emit('back-to-list')" 
                      class="mr-4 w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-500 hover:text-opay hover:shadow-sm cursor-pointer transition-all border border-transparent hover:border-green-100">
                     <i class="fa-solid fa-arrow-left"></i>
                 </div>
                 
-                <!-- Dynamic Title -->
                 <h1 class="text-2xl font-bold text-gray-800">
                     {{ branchName ? 'Fixed Savings — ' + branchName : 'Fixed Savings' }}
                 </h1>
@@ -23,7 +22,6 @@ export default {
             <span class="text-xs text-gray-400">Server Time: {{ formatDateTime(currentTime) }}</span>
         </div>
 
-        <!-- Tabs -->
         <div class="flex border-b border-[#e4e7ed] mb-5">
             <div v-for="tab in tabs" :key="tab"
                  @click="activeTab = tab"
@@ -34,9 +32,7 @@ export default {
             </div>
         </div>
 
-        <!-- Tab 1: Overview -->
         <div v-if="activeTab === 'Overview'" class="space-y-6">
-            <!-- Asset Card -->
             <div class="bg-gradient-to-br from-[#27B665] to-[#1e9e48] rounded-xl p-6 text-white shadow-lg shadow-green-100">
                 <div class="flex justify-between items-start">
                     <div>
@@ -57,7 +53,6 @@ export default {
                 </div>
             </div>
 
-            <!-- Portfolio List -->
             <div>
                 <h3 class="text-base font-bold text-gray-700 pl-2 border-l-4 border-opay mb-4">My Portfolios</h3>
                 <div v-if="activePortfolioList.length" class="space-y-4">
@@ -85,7 +80,6 @@ export default {
                 <div v-else class="text-center py-10 bg-white rounded-lg border border-dashed border-gray-200 text-gray-400 text-sm">No active plans currently.</div>
             </div>
 
-            <!-- Standard Plans (Hidden in Branch View) -->
             <div v-if="!branchName">
                 <h3 class="text-base font-bold text-gray-700 pl-2 border-l-4 border-blue-500 mb-4">Fixed Plans</h3>
                 <div class="grid grid-cols-4 gap-4">
@@ -106,7 +100,6 @@ export default {
             </div>
         </div>
 
-        <!-- Tab 2: Special Offers (Hidden in Branch View by logic below, but v-if safeguard here too) -->
         <div v-if="activeTab === 'Special Offers'">
             <div class="flex items-center mb-6">
                 <h3 class="text-base font-bold text-gray-700 pl-2 border-l-4 border-orange-400">Limited Time Offers</h3>
@@ -132,7 +125,6 @@ export default {
                                 <div class="text-xs text-gray-400 mt-1">Duration</div>
                             </div>
                         </div>
-                        <!-- Quota Bar -->
                         <div class="mb-4">
                             <div class="flex justify-between text-xs mb-1">
                                 <span class="text-gray-500">Quota: <span class="font-mono">{{ formatShortNumber(product.remainingQuota) }}</span> / <span class="text-gray-300">{{ formatShortNumber(product.totalSize) }}</span></span>
@@ -156,7 +148,6 @@ export default {
             </div>
         </div>
 
-        <!-- Tab 3: History -->
         <div v-if="activeTab === 'History'">
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                 <table class="custom-table w-full text-left border-collapse">
@@ -175,8 +166,6 @@ export default {
             </div>
         </div>
 
-        <!-- === Modals === -->
-        
         <!-- Buy Modal -->
         <div v-if="showBuyModal" class="modal-mask" @click.self="closeBuyModal">
             <div class="modal-content overflow-hidden">
@@ -185,11 +174,10 @@ export default {
                     <h3 class="text-lg font-bold">Save Amount (₦)</h3>
                     <div class="text-xs opacity-80 mt-1">
                         <span v-if="selectedProduct?.isStandard">Unlimited Quota</span>
-                        <span v-else>Min: ₦10,000.00 - Max: ₦{{ formatNumber(selectedProduct.remainingUserLimit) }}</span>
+                        <span v-else>Min: ₦{{ formatNumber(selectedProduct.minAmount) }} - Max: ₦{{ formatNumber(selectedProduct.remainingUserLimit) }}</span>
                     </div>
                 </div>
 
-                <!-- Limit Reached View -->
                 <div v-if="!selectedProduct.isStandard && selectedProduct.remainingUserLimit < 10000" class="p-8 text-center">
                     <div class="text-4xl text-gray-300 mb-4"><i class="fa-solid fa-ban"></i></div>
                     <h3 class="font-bold text-gray-700 mb-2">Purchase Limit Reached</h3>
@@ -197,7 +185,6 @@ export default {
                     <button @click="closeBuyModal" class="w-full bg-gray-100 text-gray-600 py-3 rounded-full font-bold hover:bg-gray-200">Close</button>
                 </div>
 
-                <!-- Normal Buy View -->
                 <div v-else class="p-6">
                     <input type="number" v-model.number="investmentAmount" @input="validateInput" class="w-full text-3xl font-bold text-gray-800 border-b-2 border-green-500 focus:outline-none py-2 mb-1" placeholder="0.00">
                     <div v-if="inputError" class="text-red-500 text-xs mb-6 font-medium">{{ inputError }}</div>
@@ -256,7 +243,6 @@ export default {
                              </div>
                         </div>
                     </div>
-                    <!-- Liquidate Button (Hidden in branch view) -->
                     <button v-if="selectedPortfolioItem.status === 'Investing' && !branchName" @click="openLiquidateModal" class="w-full mt-6 py-3 border border-opay text-opay rounded-full font-bold hover:bg-green-50 transition-colors">Liquidate</button>
                     <div v-if="selectedPortfolioItem.status === 'Liquidating'" class="w-full mt-6 py-3 bg-orange-50 text-orange-500 rounded-full font-bold text-center">Processing Liquidation...</div>
                 </div>
@@ -302,19 +288,9 @@ export default {
     `,
     setup(props) {
         const activeTab = ref('Overview');
-        const standardProducts = [
-            { id: 'std-7', name: 'Standard 7 Days', days: 7, rate: 12, isStandard: true, duration: 7, benchmarkRate: 12, minAmount: 1000 },
-            { id: 'std-60', name: 'Standard 60 Days', days: 60, rate: 13, isStandard: true, duration: 60, benchmarkRate: 13, minAmount: 1000 },
-            { id: 'std-180', name: 'Standard 180 Days', days: 180, rate: 14, isStandard: true, duration: 180, benchmarkRate: 14, minAmount: 1000 },
-            { id: 'std-365', name: 'Standard 365 Days', days: 365, rate: 15, isStandard: true, duration: 365, benchmarkRate: 15, minAmount: 1000 }
-        ];
-        
-        const specialProducts = ref([
-            { id: 2026, code: '2026-JAN', name: 'Fixed January 2026 Special', rate: 22.0, benchmarkRate: 15.0, duration: 30, minAmount: 10000, totalSize: 5000000000, remainingQuota: 3500000000, status: 'open', endDate: new Date(Date.now() + 29*24*3600*1000), isStandard: false, maxUserLimit: 300000, currentUserInvested: 0 },
-            { id: 2027, code: 'STARTER', name: 'Starter Special Offer', rate: 20.0, benchmarkRate: 15.0, duration: 14, minAmount: 10000, totalSize: 50000000, remainingQuota: 2000000, status: 'open', endDate: new Date(Date.now() + 2*24*3600*1000), isStandard: false, maxUserLimit: 300000, currentUserInvested: 0 },
-            { id: 2028, code: 'SOLD-OUT', name: 'Flash Sale', rate: 25.0, benchmarkRate: 15.0, duration: 7, minAmount: 1000, totalSize: 10000000, remainingQuota: 0, status: 'sold_out', endDate: new Date(Date.now() + 7*24*3600*1000), isStandard: false, maxUserLimit: 300000, currentUserInvested: 0 }
-        ]);
-
+        // 使用配置数据初始化
+        const standardProducts = STANDARD_PRODUCTS;
+        const specialProducts = ref(getSpecialProducts()); // 函数调用获取带最新日期的列表
         const portfolioList = ref([{ id: 1, productName: 'Fixed 27/01/2026', status: 'Investing', amount: 301000, interest: 864.16, rate: 15, duration: 7, createTime: '27 Jan 2026 19:58:16', maturityDate: '03 Feb 2026', rawMaturityDate: new Date('2026-02-03T00:00:00'), payoutProcessed: false }]);
         const historyList = ref([{ id: 'TXN8839201', type: 'Deposit', product: 'Fixed 27/01/2026', amount: 301000, status: 'Success', date: '2026-01-27 10:30:00' }]);
 
@@ -433,7 +409,7 @@ export default {
         const closeSuccessModal = () => { showSuccessModal.value = false; activeTab.value = 'Overview'; };
         const closeLiquidateSuccess = () => { showLiquidateSuccessModal.value = false; activeTab.value = 'Overview'; };
 
-        // Helper: Update Countdowns logic (Extracted for Watcher & Init)
+        // Helper: Update Countdowns
         const updateCountdowns = (time) => {
             specialProducts.value.forEach(p => {
                 if (p.status === 'sold_out') { p.countdown = ''; return; }
@@ -449,7 +425,7 @@ export default {
             });
         };
 
-        // Initialize Countdowns immediately
+        // Initialize Countdowns
         updateCountdowns(props.currentTime);
 
         // Watchers
@@ -468,7 +444,7 @@ export default {
                     historyList.value.unshift({ id: 'LIQ_PAY'+Math.floor(Math.random()*1000000), type: 'Payout', product: item.productName, amount: item.amount, status: 'Success', date: formatDateTime(newTime) });
                 }
             });
-            // Countdowns Update via Watcher
+            // Countdowns
             updateCountdowns(newTime);
         });
 

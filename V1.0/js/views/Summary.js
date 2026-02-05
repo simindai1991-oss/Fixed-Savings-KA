@@ -1,11 +1,12 @@
-// 关键修正：使用全局 Vue 对象，避免模块冲突
 const { ref } = Vue;
 import { formatNumber, formatShortNumber } from '../utils.js';
+// 引入配置文件
+import { MOCK_SUMMARY_DATA, MOCK_TREND_DATA, MOCK_BRANCH_LIST } from '../config.js';
 
 export default {
     template: `
     <div class="fade-in">
-        <!-- Page Header Row (新增的标题行与按钮) -->
+        <!-- Page Header Row -->
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                 Savings Summary
@@ -182,38 +183,17 @@ export default {
     </div>
     `,
     setup() {
-        // Summary Data
-        const summaryData = ref({
-            totalAssets: 8540230.50,
-            owealthBalance: 5200000,
-            fixedBalance: 3340230.50,
-            yesterdayInterest: 3550.00, 
-            interestGrowth: 12,
-            totalInterestEarned: 850120.00
-        });
-
-        const trendData = ref([
-            { label: 'Mon', amount: 2850 },
-            { label: 'Tue', amount: 2920 },
-            { label: 'Wed', amount: 3100 },
-            { label: 'Thu', amount: 2980 },
-            { label: 'Fri', amount: 3350 },
-            { label: 'Sat', amount: 3100 },
-            { label: 'Sun', amount: 3550 }
-        ]);
+        // Use Config Data
+        const summaryData = ref(MOCK_SUMMARY_DATA);
+        const trendData = ref(MOCK_TREND_DATA);
+        
+        // Filter out branches marked as "isNew" for the Add Modal
+        const mockBranchList = ref(MOCK_BRANCH_LIST.filter(b => b.isNew));
 
         const maxAmount = 4000; 
 
         // Modal Logic
         const showAddBranchModal = ref(false);
-        const mockBranchList = ref([
-            { id: '1200067054', name: 'test merchant', balance: 27353, method: 'Balance', selected: false },
-            { id: '1200067056', name: 'new branch', balance: 13918.8, method: 'Balance', selected: false },
-            { id: '1200134929', name: 'test merchant 222', balance: 50, method: 'Sweep-cash', selected: false },
-            { id: '1200067060', name: 'test new branch33333333', balance: 0, method: 'Balance', selected: false },
-            { id: '1200135484', name: 'test merhcant iiiii', balance: 0, method: 'Balance', selected: false },
-            { id: '1200136099', name: 'xiaoshuang', balance: 9.49, method: 'Balance', selected: false },
-        ]);
 
         const openAddBranchModal = () => {
             // Reset selection
