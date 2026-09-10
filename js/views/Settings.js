@@ -35,13 +35,6 @@ export default {
             </div>
 
             <div class="p-8 flex-1">
-                <h2 class="text-base font-bold text-gray-800 mb-2">
-                    <span class="text-red-500 mr-0.5">*</span> Interest Setting
-                </h2>
-                <p class="text-xs text-gray-400 mb-6">
-                    Interest accrual and Interest Isolation are configured separately. HQ Admin only; applies to headquarters and all branches when saved.
-                </p>
-
                 <div v-if="interestBalanceBlocked"
                      class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700 leading-relaxed">
                     <div class="flex items-start gap-2">
@@ -59,7 +52,9 @@ export default {
                 <!-- Setting A: Interest on / off -->
                 <section class="mb-8">
                     <h3 class="text-sm font-bold text-gray-800 mb-1">1. Interest Accrual</h3>
-                    <p class="text-xs text-gray-400 mb-4">Whether OWealth accrues interest.</p>
+                    <p class="text-xs text-gray-400 mb-4">
+                        Whether savings products accrue interest (applies to both OWealth and Fixed Savings).
+                    </p>
 
                     <div class="space-y-3">
                         <div class="block border rounded-lg p-5 transition-all cursor-pointer"
@@ -76,7 +71,7 @@ export default {
                                         <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-opay text-white">Default</span>
                                     </div>
                                     <p class="text-xs text-gray-500 mt-2 leading-relaxed">
-                                        OWealth accrues interest daily. Accrual style is controlled by Interest Isolation below.
+                                        OWealth and Fixed Savings accrue interest. For OWealth, accrual style is controlled by OWealth Interest Isolation below.
                                     </p>
                                 </div>
                             </div>
@@ -95,8 +90,8 @@ export default {
                                         <span class="text-sm font-medium text-gray-800">Interest Disabled (Non-Interest)</span>
                                     </div>
                                     <p class="text-xs text-gray-500 mt-2 leading-relaxed">
-                                        OWealth will not accrue interest. Intended for merchants who do not accept interest (e.g. Islamic finance compliance).
-                                        Independent from Interest Isolation balance checks.
+                                        Neither OWealth nor Fixed Savings will accrue interest. Intended for merchants who do not accept interest (e.g. Islamic finance compliance).
+                                        Independent from OWealth Interest Isolation balance checks.
                                     </p>
                                     <p class="text-xs text-orange-500 mt-2 leading-relaxed">
                                         Existing accrued interest remains per policy; no new interest will be generated.
@@ -293,11 +288,11 @@ export default {
                     return;
                 }
                 if (!payload.interestEnabled) {
-                    showTip('Settings saved: Interest Disabled — OWealth will not accrue interest.');
+                    showTip('Settings saved: Interest Disabled — OWealth and Fixed Savings will not accrue interest.');
                 } else if (payload.isolationEnabled) {
-                    showTip(`Settings saved: Interest Isolation On (Simple) at ${simpleRate}% p.a. (pre-tax).`);
+                    showTip(`Settings saved: OWealth Interest Isolation On (Simple) at ${simpleRate}% p.a. (pre-tax).`);
                 } else {
-                    showTip(`Settings saved: Interest Enabled + Compound at ${compoundRate}% p.a. (pre-tax).`);
+                    showTip(`Settings saved: Interest Enabled + OWealth Compound at ${compoundRate}% p.a. (pre-tax).`);
                 }
             }, 500);
         };
