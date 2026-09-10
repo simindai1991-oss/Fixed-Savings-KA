@@ -16,6 +16,9 @@ export const OWEALTH_SIMPLE_RATE = 4.87;
 export const MOCK_SUMMARY_DATA = {
     totalAssets: 8540230.50,
     owealthBalance: 5200000,
+    // 本息隔离时拆开展示（合计仍等于 owealthBalance）
+    owealthPrincipal: 4512750,
+    owealthInterest: 687250,
     fixedBalance: 3340230.50,
     yesterdayInterest: 3550.00,
     interestGrowth: 12,
@@ -150,4 +153,17 @@ export const MOCK_BRANCH_LIST = [
     { id: '1200067060', name: 'test new branch33333333', balance: 0, method: 'Balance', selected: false, isNew: true },
     { id: '1200135484', name: 'test merhcant iiiii', balance: 0, method: 'Balance', selected: false, isNew: true },
     { id: '1200136099', name: 'xiaoshuang', balance: 9.49, method: 'Balance', selected: false, isNew: true }
+];
+
+// 5.1 Branch OWealth - 分支活期列表（隔离模式下拆 Principal / Interest）
+export const MOCK_BRANCH_OWEALTH_LIST = [
+    { id: '1100000003', name: 'OPAY DIGITAL SERVICES LIMITED', owealthBalance: 4024.35, principalBalance: 3337.10, interestBalance: 687.25, yesterdayInterest: 0.47, totalInterest: 698.06 },
+    { id: '1200000172', name: 'test merchant 001', owealthBalance: 120.00, principalBalance: 100.00, interestBalance: 20.00, yesterdayInterest: 0.02, totalInterest: 20.00 },
+    { id: '1200000575', name: 'SELECT ALL', owealthBalance: 100.73, principalBalance: 100.73, interestBalance: 0, yesterdayInterest: 0, totalInterest: 0 },
+    { id: '2200394013', name: 'ONE1029001', owealthBalance: 0, principalBalance: 0, interestBalance: 0, yesterdayInterest: 0, totalInterest: 0 },
+    { id: '1200000008', name: 'New Michael Branch', owealthBalance: 0, principalBalance: 0, interestBalance: 0, yesterdayInterest: 0, totalInterest: 0 },
+    { id: '1200000010', name: 'michael test', owealthBalance: 56.20, principalBalance: 50.00, interestBalance: 6.20, yesterdayInterest: 0.01, totalInterest: 6.20 },
+    { id: '2200394015', name: 'ONE1031', owealthBalance: 0, principalBalance: 0, interestBalance: 0, yesterdayInterest: 0, totalInterest: 0 },
+    { id: '1200426151', name: 'TWO1030', owealthBalance: 880.50, principalBalance: 800.00, interestBalance: 80.50, yesterdayInterest: 0.11, totalInterest: 80.50 },
+    { id: '1200136099', name: 'xiaoshuang', owealthBalance: 9.49, principalBalance: 9.49, interestBalance: 0, yesterdayInterest: 0, totalInterest: 0 }
 ];

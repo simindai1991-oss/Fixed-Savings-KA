@@ -5,16 +5,30 @@ import {
     interestSettings,
     isSimpleAccrualMode,
     isInterestEnabled,
+    isNonInterestMode,
     getActiveRateLabel,
     getCompoundDailyRate,
-    getSimpleDailyRate
+    getSimpleDailyRate,
+    setIsolatedInterestBalance
 } from '../interestSettings.js';
+import PinVerification from '../components/PinVerification.js';
+
+const BRANCH_NAME = 'OPAY DIGITAL SERVICES LIMITED';
+const DISCLAIMER = '*OWealth related services are powered by OPay MicroFinance Bank, which is fully licensed by the CBN and insured by the NDIC.';
 
 export default {
-    props: ['currentTime'],
+    components: { PinVerification },
+    props: ['currentTime', 'branchName'],
+    emits: ['back-to-list'],
     template: `
     <div class="fade-in space-y-6 relative">
-        <h1 class="text-2xl font-bold text-gray-800">OWealth</h1>
+        <div class="flex items-center">
+            <div v-if="branchName" @click="$emit('back-to-list')"
+                 class="mr-4 w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-500 hover:text-opay hover:shadow-sm cursor-pointer transition-all border border-transparent hover:border-green-100">
+                <i class="fa-solid fa-arrow-left"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ pageTitle }}</h1>
+        </div>
 
         <div v-if="toastMsg" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded shadow-2xl z-[9999] transition-all flex items-center gap-3 w-max pointer-events-none">
             <i class="fa-solid" :class="isProcessing ? 'fa-circle-notch fa-spin text-white' : 'fa-circle-check text-[#27B665]'"></i>
@@ -22,31 +36,32 @@ export default {
         </div>
 
         <!-- Top Asset Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between col-span-1 lg:col-span-2">
+        <div class="grid grid-cols-1 gap-6 items-stretch" :class="isNonInterestMode ? '' : 'lg:grid-cols-3'">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col h-full"
+                 :class="isNonInterestMode ? 'col-span-1' : 'col-span-1 lg:col-span-2'">
 
-                <!-- Compound / Non-interest: Single OWealth Card -->
-                <div v-if="!isSimpleMode" class="bg-green-50/50 border border-green-100/50 rounded-xl p-5 relative overflow-hidden group hover:bg-green-50 transition-colors flex flex-col justify-between min-h-[180px]">
+                <!-- Compound / Non-interest: Single OWealth Card (fills white shell) -->
+                <div v-if="!isSimpleMode" class="bg-green-50/50 border border-green-100/50 rounded-xl p-5 relative overflow-hidden group hover:bg-green-50 transition-colors flex flex-col justify-between flex-1 h-full min-h-[180px]">
                     <div class="absolute -right-4 -top-4 w-20 h-20 bg-green-200/20 rounded-full blur-xl group-hover:bg-green-300/30 transition-all"></div>
                     <div class="relative z-10 mb-6">
                         <div class="flex items-center gap-2 mb-3">
                             <span class="text-gray-500 text-sm font-medium">OWealth</span>
                             <span v-if="interestEnabled" class="bg-[#27B665]/10 text-[#27B665] px-2 py-0.5 rounded text-xs font-bold">{{ compoundRateLabel }} p.a.</span>
-                            <span v-else class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs font-bold">Non-Interest</span>
+                            <span v-else class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-xs font-bold">Interest Disabled</span>
                         </div>
                         <div class="text-[32px] leading-none font-bold text-gray-800">
                             ₦{{ formatNumber(accountData.principalBalance) }}
                         </div>
                     </div>
-                    <div class="flex gap-3 relative z-10 mt-auto w-2/3">
+                    <div class="flex gap-3 relative z-10 mt-auto" :class="isNonInterestMode ? 'w-1/3 max-w-md' : 'w-2/3'">
                         <button @click.stop="openDeposit" class="flex-1 bg-[#27B665] hover:bg-[#219e56] text-white text-sm font-bold py-2.5 rounded-lg transition-colors shadow-sm shadow-green-200">Deposit</button>
                         <button @click.stop="openWithdraw" class="flex-1 bg-white hover:bg-green-50 border border-green-200 text-[#27B665] text-sm font-bold py-2.5 rounded-lg transition-colors shadow-sm">Withdraw</button>
                     </div>
                 </div>
 
-                <!-- Simple Isolation: Dual Cards -->
-                <div v-else class="flex flex-col md:flex-row gap-4 h-full">
-                    <div class="w-full md:w-2/3 bg-green-50/50 border border-green-100/50 rounded-xl p-5 relative overflow-hidden group hover:bg-green-50 transition-colors flex flex-col justify-between">
+                <!-- Simple Isolation: Dual Cards (equal height) -->
+                <div v-else class="flex flex-col md:flex-row gap-4 flex-1 h-full items-stretch">
+                    <div class="w-full md:w-2/3 bg-green-50/50 border border-green-100/50 rounded-xl p-5 relative overflow-hidden group hover:bg-green-50 transition-colors flex flex-col justify-between h-full min-h-[200px]">
                         <div class="absolute -right-4 -top-4 w-20 h-20 bg-green-200/20 rounded-full blur-xl group-hover:bg-green-300/30 transition-all"></div>
                         <div class="relative z-10 mb-6">
                             <div class="flex items-center gap-2 mb-3">
@@ -63,7 +78,7 @@ export default {
                         </div>
                     </div>
 
-                    <div class="w-full md:w-1/3 bg-blue-50/50 border border-blue-100/50 rounded-xl p-5 relative overflow-hidden group hover:bg-blue-50 transition-colors flex flex-col justify-between">
+                    <div class="w-full md:w-1/3 bg-blue-50/50 border border-blue-100/50 rounded-xl p-5 relative overflow-hidden group hover:bg-blue-50 transition-colors flex flex-col justify-between h-full min-h-[200px]">
                         <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-200/20 rounded-full blur-xl group-hover:bg-blue-300/30 transition-all"></div>
                         <div class="relative z-10 mb-6">
                             <div class="text-gray-500 text-sm font-medium mb-3">Interest Account</div>
@@ -83,13 +98,12 @@ export default {
                 </div>
             </div>
 
-            <div class="flex flex-col gap-6 col-span-1">
+            <!-- Interest stats (hidden in Non-Interest mode) -->
+            <div v-if="!isNonInterestMode" class="flex flex-col gap-6 col-span-1">
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex-1 flex flex-col justify-center relative overflow-hidden">
                     <i class="fa-solid fa-arrow-trend-up absolute -right-6 -bottom-6 text-green-50 text-[100px] opacity-60 pointer-events-none"></i>
                     <div class="relative z-10">
-                        <div class="flex items-center gap-1 mb-2">
-                            <span class="text-gray-500 text-sm font-medium">Yesterday's interest</span>
-                        </div>
+                        <div class="text-gray-500 text-sm font-medium mb-2">Yesterday's interest</div>
                         <div class="text-[28px] font-bold text-gray-800">₦{{ formatNumber(accountData.yesterdayInterest) }}</div>
                     </div>
                 </div>
@@ -103,8 +117,9 @@ export default {
             </div>
         </div>
 
-        <!-- Auto-deposit -->
-        <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 shadow-sm border border-blue-100 flex justify-between items-center relative overflow-hidden">
+        <!-- Auto-deposit (hidden in Non-Interest mode) -->
+        <div v-if="!isNonInterestMode"
+             class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 shadow-sm border border-blue-100 flex justify-between items-center relative overflow-hidden">
             <div class="z-10 relative">
                 <h3 class="text-lg font-bold text-gray-800 mb-1">Auto-deposit</h3>
                 <p class="text-xs text-gray-500 mb-4">Turn on Auto-deposit to automatically move funds from your Balance to OWealth</p>
@@ -129,7 +144,6 @@ export default {
                 <h3 class="text-lg font-bold text-gray-800">Detail</h3>
             </div>
 
-            <!-- Isolation: dual tabs -->
             <div v-if="isSimpleMode" class="flex border-b border-gray-200 mb-4">
                 <button v-for="tab in detailTabs" :key="tab.id"
                         @click="activeDetailTab = tab.id"
@@ -159,18 +173,9 @@ export default {
                         Download <i class="fa-solid fa-chevron-down text-[10px]"></i>
                     </button>
                     <div v-if="showDownloadMenu"
-                         class="absolute right-0 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-sm">
-                        <template v-if="isSimpleMode">
-                            <button @click="downloadStatement('principal')" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700">
-                                OWealth Transaction Statements — Principal Account (CSV)
-                            </button>
-                            <button @click="downloadStatement('interest')" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700">
-                                OWealth Transaction Statements — Interest Account (CSV)
-                            </button>
-                        </template>
-                        <button v-else @click="downloadStatement('owealth')" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700">
-                            OWealth Transaction Statements (CSV)
-                        </button>
+                         class="absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-sm">
+                        <button @click="downloadStatement('csv')" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700">csv</button>
+                        <button @click="downloadStatement('pdf')" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-gray-700">pdf</button>
                     </div>
                 </div>
             </div>
@@ -195,8 +200,8 @@ export default {
                             <td class="py-4">{{ txn.date }}</td>
                             <td class="py-4">{{ txn.type }}</td>
                             <td class="py-4">₦{{ formatNumber(txn.before) }}</td>
-                            <td class="py-4 font-medium" :class="txn.inflow ? 'text-green-600' : ''">{{ txn.inflow ? '+' + formatNumber(txn.inflow) : '-' }}</td>
-                            <td class="py-4 font-medium text-gray-800">{{ txn.outflow ? formatNumber(txn.outflow) : '-' }}</td>
+                            <td class="py-4 font-medium" :class="txn.inflow ? 'text-green-600' : ''">{{ txn.inflow != null ? formatNumber(txn.inflow) : '-' }}</td>
+                            <td class="py-4 font-medium text-gray-800">{{ txn.outflow != null ? formatNumber(txn.outflow) : '-' }}</td>
                             <td class="py-4">₦{{ formatNumber(txn.after) }}</td>
                         </tr>
                     </tbody>
@@ -266,14 +271,20 @@ export default {
                 </div>
             </div>
         </div>
+
+        <pin-verification v-model="showPinModal" @confirm="onPinConfirm" @cancel="onPinCancel" />
     </div>
     `,
     setup(props) {
         const compoundRateLabel = `${OWEALTH_COMPOUND_RATE}%`;
         const simpleRateLabel = `${OWEALTH_SIMPLE_RATE}%`;
+        const pageTitle = computed(() =>
+            props.branchName ? `OWealth-${props.branchName}` : 'OWealth'
+        );
 
         const isSimpleMode = computed(() => isSimpleAccrualMode());
         const interestEnabled = computed(() => isInterestEnabled());
+        const isNonInterestModeView = computed(() => isNonInterestMode());
         const displayRate = computed(() => getActiveRateLabel());
 
         const accountData = reactive({
@@ -295,7 +306,6 @@ export default {
         const filterEnd = ref('');
         const showDownloadMenu = ref(false);
 
-        // account: 'principal' | 'interest' | 'owealth'
         const transactions = ref([
             { id: 'p1', account: 'principal', date: 'Aug 6, 2026 12:54:04', type: 'Payment Withdraw', before: 4113.54, inflow: null, outflow: 100.00, after: 4013.54, ts: Date.parse('2026-08-06T12:54:04') },
             { id: 'p2', account: 'principal', date: 'Aug 6, 2026 12:37:26', type: 'Payment Withdraw', before: 4126.54, inflow: null, outflow: 13.00, after: 4113.54, ts: Date.parse('2026-08-06T12:37:26') },
@@ -308,17 +318,24 @@ export default {
 
         const parseFilterBound = (dateStr, endOfDay) => {
             if (!dateStr) return null;
-            const d = new Date(dateStr + (endOfDay ? 'T23:59:59' : 'T00:00:00'));
-            return d.getTime();
+            return new Date(dateStr + (endOfDay ? 'T23:59:59' : 'T00:00:00')).getTime();
         };
 
-        const filteredTransactions = computed(() => {
-            let account;
+        const currentAccountKey = computed(() => {
             if (isSimpleMode.value) {
-                account = activeDetailTab.value === 'interest' ? 'interest' : 'principal';
-            } else {
-                account = 'owealth';
+                return activeDetailTab.value === 'interest' ? 'interest' : 'principal';
             }
+            return 'owealth';
+        });
+
+        const accountLabel = computed(() => {
+            if (currentAccountKey.value === 'interest') return 'Interest Account';
+            if (currentAccountKey.value === 'principal') return 'Principal Account';
+            return 'OWealth';
+        });
+
+        const filteredTransactions = computed(() => {
+            const account = currentAccountKey.value;
             const start = parseFilterBound(filterStart.value, false);
             const end = parseFilterBound(filterEnd.value, true);
             return transactions.value
@@ -342,16 +359,54 @@ export default {
                 accountData.principalBalance += accountData.isolatedInterest;
                 accountData.isolatedInterest = 0;
             }
+            setIsolatedInterestBalance(0);
         };
 
-        watch(() => interestSettings.mode, (mode) => {
-            if (mode === 'compound' || mode === 'none') mergeInterestIntoPrincipal();
-            if (mode === 'simple') activeDetailTab.value = 'principal';
-            showDownloadMenu.value = false;
-        });
+        const syncIsolatedInterestToStore = () => {
+            setIsolatedInterestBalance(accountData.isolatedInterest);
+        };
+
+        watch(() => accountData.isolatedInterest, syncIsolatedInterestToStore);
+
+        watch(
+            () => [interestSettings.interestEnabled, interestSettings.isolationEnabled],
+            () => {
+                // Settings 已拦截有余额时关闭隔离/计息；此处仅做兜底同步
+                if (!isSimpleAccrualMode()) {
+                    if (accountData.isolatedInterest > 0) {
+                        syncIsolatedInterestToStore();
+                        return;
+                    }
+                    setIsolatedInterestBalance(0);
+                } else {
+                    activeDetailTab.value = 'principal';
+                    const storeBal = Number(interestSettings.isolatedInterestBalance) || 0;
+                    if (storeBal > 0 && accountData.isolatedInterest <= 0) {
+                        if (accountData.principalBalance >= storeBal) {
+                            accountData.principalBalance -= storeBal;
+                        }
+                        accountData.isolatedInterest = storeBal;
+                    } else if (accountData.isolatedInterest <= 0 && accountData.principalBalance > 1000) {
+                        const seed = 687.25;
+                        accountData.principalBalance -= seed;
+                        accountData.isolatedInterest = seed;
+                    }
+                    syncIsolatedInterestToStore();
+                }
+                showDownloadMenu.value = false;
+            }
+        );
 
         onMounted(() => {
-            if (!isSimpleAccrualMode()) mergeInterestIntoPrincipal();
+            if (!isSimpleAccrualMode()) {
+                mergeInterestIntoPrincipal();
+            } else {
+                const storeBal = Number(interestSettings.isolatedInterestBalance) || 0;
+                if (storeBal > 0) {
+                    accountData.isolatedInterest = storeBal;
+                }
+                syncIsolatedInterestToStore();
+            }
             document.addEventListener('click', () => { showDownloadMenu.value = false; });
         });
 
@@ -372,15 +427,30 @@ export default {
         const openDeposit = () => { actionAmount.value = null; showDeposit.value = true; };
         const openWithdraw = () => { actionAmount.value = null; showWithdraw.value = true; };
 
+        const showPinModal = ref(false);
+        const pendingAuth = ref(null);
+
         const executeWithAuth = (actionCallback, successMsg) => {
+            pendingAuth.value = { actionCallback, successMsg };
+            showPinModal.value = true;
+        };
+
+        const onPinConfirm = () => {
+            const pending = pendingAuth.value;
+            pendingAuth.value = null;
+            if (!pending) return;
             isProcessing.value = true;
             triggerToast('Processing verification...', true);
             setTimeout(() => {
                 isProcessing.value = false;
-                actionCallback();
+                pending.actionCallback();
                 closeModals();
-                triggerToast(successMsg);
-            }, 1000);
+                triggerToast(pending.successMsg);
+            }, 600);
+        };
+
+        const onPinCancel = () => {
+            pendingAuth.value = null;
         };
 
         const pushTxn = ({ account, type, before, after, inflow, outflow }) => {
@@ -438,11 +508,8 @@ export default {
             executeWithAuth(() => {
                 const interestBefore = accountData.isolatedInterest;
                 const principalBefore = accountData.principalBalance;
-
                 accountData.isolatedInterest = 0;
                 accountData.principalBalance += amt;
-
-                // Interest Account: Outflow
                 pushTxn({
                     account: 'interest',
                     type: 'Interest Transfer to Principal',
@@ -450,7 +517,6 @@ export default {
                     after: 0,
                     outflow: amt
                 });
-                // Principal Account: Inflow
                 pushTxn({
                     account: 'principal',
                     type: 'Interest Transfer to Principal',
@@ -465,7 +531,6 @@ export default {
 
         watch(() => props.currentTime, (newDate) => {
             if (!isInterestEnabled()) return;
-
             const timeDiff = newDate.getTime() - lastProcessedDate.value.getTime();
             const daysPassed = Math.floor(timeDiff / (1000 * 3600 * 24));
 
@@ -505,75 +570,276 @@ export default {
             }
         });
 
-        const downloadStatement = (scope) => {
-            showDownloadMenu.value = false;
-            const account = scope === 'interest' ? 'interest'
-                : scope === 'principal' ? 'principal'
-                : 'owealth';
-
-            const rows = transactions.value
+        const buildStatementRows = () => {
+            const account = currentAccountKey.value;
+            const start = parseFilterBound(filterStart.value, false);
+            const end = parseFilterBound(filterEnd.value, true);
+            return transactions.value
                 .filter(t => t.account === account)
                 .filter(t => {
-                    const start = parseFilterBound(filterStart.value, false);
-                    const end = parseFilterBound(filterEnd.value, true);
                     if (start != null && t.ts < start) return false;
                     if (end != null && t.ts > end) return false;
                     return true;
                 })
-                .sort((a, b) => a.ts - b.ts);
+                .sort((a, b) => b.ts - a.ts);
+        };
 
-            const title = scope === 'interest'
-                ? 'OWealth Transaction Statements - Interest Account'
-                : scope === 'principal'
-                    ? 'OWealth Transaction Statements - Principal Account'
-                    : 'OWealth Transaction Statements';
+        const buildSummary = (rows) => {
+            const opening = rows.length
+                ? rows[rows.length - 1].before
+                : (currentAccountKey.value === 'interest' ? accountData.isolatedInterest : accountData.principalBalance);
+            const closing = rows.length
+                ? rows[0].after
+                : (currentAccountKey.value === 'interest' ? accountData.isolatedInterest : accountData.principalBalance);
+            const inflows = rows.filter(r => r.inflow != null).reduce((s, r) => s + r.inflow, 0);
+            const outflows = rows.filter(r => r.outflow != null).reduce((s, r) => s + r.outflow, 0);
+            return {
+                opening,
+                closing,
+                inflows,
+                outflows,
+                inflowCount: rows.filter(r => r.inflow != null).length,
+                outflowCount: rows.filter(r => r.outflow != null).length,
+                summaryDates: `${filterStart.value || 'N/A'} - ${filterEnd.value || 'N/A'}`
+            };
+        };
 
-            const opening = rows.length ? rows[0].before : 0;
-            const closing = rows.length ? rows[rows.length - 1].after
-                : (scope === 'interest' ? accountData.isolatedInterest : accountData.principalBalance);
-            const inflows = rows.filter(r => r.inflow).reduce((s, r) => s + r.inflow, 0);
-            const outflows = rows.filter(r => r.outflow).reduce((s, r) => s + r.outflow, 0);
-            const inflowCount = rows.filter(r => r.inflow).length;
-            const outflowCount = rows.filter(r => r.outflow).length;
+        const formatAmt = (n) => formatNumber(n);
+        const cellIn = (r) => (r.inflow != null ? formatAmt(r.inflow) : '-');
+        const cellOut = (r) => (r.outflow != null ? formatAmt(r.outflow) : '-');
 
+        const makeFileId = () => {
+            const d = props.currentTime;
+            const pad = (n) => String(n).padStart(2, '0');
+            const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+            return `TS${stamp}${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`;
+        };
+
+        const statementTitle = () => {
+            const key = currentAccountKey.value;
+            if (key === 'interest') return 'Transaction Statements - Interest Account';
+            if (key === 'principal') return 'Transaction Statements - Principal Account';
+            return 'Transaction Statements - OWealth';
+        };
+
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const formatIssuingDate = (d) =>
+            `${pad2(d.getDate())} ${monthsShort[d.getMonth()]} ${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+
+        const downloadCsv = (rows, summary, fileId) => {
+            const title = statementTitle();
             const lines = [
                 title,
-                'OWealth related services are powered by OPay MicroFinance Bank, which is fully licensed by the CBN and insured by the NDIC.',
+                `Branch Name,${BRANCH_NAME}`,
+                `File ID,${fileId}`,
+                `Issuing Date,${formatIssuingDate(props.currentTime)}`,
                 '',
                 'Account Summary',
-                `Branch Name,OPAY DIGITAL SERVICES LIMITED`,
-                `Summary Dates,${filterStart.value || 'N/A'} ~ ${filterEnd.value || 'N/A'}`,
-                `Opening Balance(₦),${opening.toFixed(2)}`,
-                `Closing Balance(₦),${closing.toFixed(2)}`,
-                `Inflow Count,${inflowCount}`,
-                `Outflow Count,${outflowCount}`,
-                `Total Inflows,${inflows.toFixed(2)}`,
-                `Total Outflows,${outflows.toFixed(2)}`,
+                `Opening Balance(₦),${formatAmt(summary.opening)}`,
+                `Closing Balance(₦),${formatAmt(summary.closing)}`,
+                `Money In,${formatAmt(summary.inflows)}`,
+                `Money Out,${formatAmt(summary.outflows)}`,
+                `Inflow Count,${summary.inflowCount}`,
+                `Outflow Count,${summary.outflowCount}`,
                 '',
+                'Transaction Details',
                 'Transaction Date,Transaction Type,Balance Before(₦),Inflow(₦),Outflow(₦),Balance After(₦)',
                 ...rows.map(r => [
                     `"${r.date}"`,
                     `"${r.type}"`,
-                    r.before.toFixed(2),
-                    r.inflow != null ? r.inflow.toFixed(2) : '',
-                    r.outflow != null ? r.outflow.toFixed(2) : '',
-                    r.after.toFixed(2)
-                ].join(','))
+                    formatAmt(r.before),
+                    r.inflow != null ? formatAmt(r.inflow) : '-',
+                    r.outflow != null ? formatAmt(r.outflow) : '-',
+                    formatAmt(r.after)
+                ].join(',')),
+                '',
+                DISCLAIMER
             ];
 
-            const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${title.replace(/\s+/g, '_')}.csv`;
+            a.download = `${fileId}_OWealthDetails.csv`;
             a.click();
             URL.revokeObjectURL(url);
-            triggerToast(`${title} downloaded`);
+        };
+
+        const downloadPdf = (rows, summary, fileId) => {
+            const title = statementTitle();
+            const issued = formatIssuingDate(props.currentTime);
+            const pageSize = 18;
+            const pages = [];
+            for (let i = 0; i < Math.max(rows.length, 1); i += pageSize) {
+                pages.push(rows.slice(i, i + pageSize));
+            }
+
+            const tableRows = (chunk) => chunk.map(r => `
+                <tr>
+                    <td>${r.date}</td>
+                    <td>${r.type}</td>
+                    <td class="num">${formatAmt(r.before)}</td>
+                    <td class="num">${cellIn(r)}</td>
+                    <td class="num">${cellOut(r)}</td>
+                    <td class="num">${formatAmt(r.after)}</td>
+                </tr>`).join('');
+
+            const htmlPages = pages.map((chunk, idx) => `
+              <section class="page">
+                <div class="header">
+                  <div class="brand">
+                    <div class="logo">O</div>
+                    <div class="brand-name">OPay</div>
+                  </div>
+                  <div class="meta">
+                    <div><span class="label">Branch Name: </span><span class="value">${BRANCH_NAME}</span></div>
+                    <div><span class="label">File ID: </span><span class="value">${fileId}</span></div>
+                    <div><span class="label">Issuing Date: </span><span class="value">${issued}</span></div>
+                  </div>
+                </div>
+
+                <h1>${title}</h1>
+
+                ${idx === 0 ? `
+                <div class="section-title">Account Summary</div>
+                <div class="summary-box">
+                  <div class="summary-grid">
+                    <div class="summary-row"><span class="k">Opening Balance</span><span class="v">${formatAmt(summary.opening)}</span></div>
+                    <div class="summary-row"><span class="k">Closing Balance</span><span class="v">${formatAmt(summary.closing)}</span></div>
+                    <div class="summary-row"><span class="k">Money In</span><span class="v">${formatAmt(summary.inflows)}</span></div>
+                    <div class="summary-row"><span class="k">Inflow Count</span><span class="v">${summary.inflowCount}</span></div>
+                    <div class="summary-row"><span class="k">Money Out</span><span class="v">${formatAmt(summary.outflows)}</span></div>
+                    <div class="summary-row"><span class="k">Outflow Count</span><span class="v">${summary.outflowCount}</span></div>
+                  </div>
+                </div>` : ''}
+
+                <div class="section-title">Transaction Details</div>
+                <table class="details">
+                  <thead>
+                    <tr>
+                      <th>Transaction Date</th>
+                      <th>Transaction Type</th>
+                      <th class="num">Balance Before(₦)</th>
+                      <th class="num">Inflow(₦)</th>
+                      <th class="num">Outflow(₦)</th>
+                      <th class="num">Balance After(₦)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${chunk.length ? tableRows(chunk) : '<tr><td colspan="6" class="empty">No transactions in this range.</td></tr>'}
+                  </tbody>
+                </table>
+
+                <p class="disclaimer">${DISCLAIMER}</p>
+                <div class="page-footer">
+                  <span>${fileId}</span>
+                  <span>Page ${idx + 1} of ${pages.length}</span>
+                </div>
+              </section>`).join('');
+
+            const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>${fileId}_OWealthDetailsPdf</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, "Segoe UI", sans-serif;
+    color: #1f2937;
+    font-size: 11px;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page { page-break-after: always; padding-bottom: 28px; }
+  .page:last-child { page-break-after: auto; }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .logo {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: #27B665; color: #fff; font-weight: 800; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-name { font-size: 22px; font-weight: 800; color: #111827; letter-spacing: -0.02em; }
+  .meta { text-align: right; font-size: 11px; line-height: 1.55; color: #374151; }
+  .meta .label { color: #6b7280; }
+  .meta .value { font-weight: 600; color: #111827; }
+  h1 { font-size: 18px; font-weight: 700; margin: 0 0 16px; color: #111827; }
+  .section-title { font-size: 13px; font-weight: 700; margin: 0 0 8px; color: #111827; }
+  .summary-box {
+    border: 1px solid #e5e7eb; border-radius: 4px;
+    padding: 12px 14px 10px; margin-bottom: 20px;
+  }
+  .summary-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    column-gap: 40px; row-gap: 6px;
+  }
+  .summary-row { display: flex; justify-content: space-between; gap: 16px; padding: 2px 0; }
+  .summary-row .k { color: #6b7280; }
+  .summary-row .v { font-weight: 600; color: #111827; text-align: right; }
+  table.details { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 10.5px; }
+  table.details thead th {
+    text-align: left; font-weight: 600; color: #6b7280;
+    padding: 8px 6px; border-bottom: 1px solid #e5e7eb; white-space: nowrap;
+  }
+  table.details thead th.num, table.details td.num { text-align: right; }
+  table.details tbody td {
+    padding: 8px 6px; border-bottom: 1px solid #f3f4f6;
+    color: #374151; vertical-align: top;
+  }
+  .empty { text-align: center; color: #9ca3af; padding: 24px 0; }
+  .disclaimer { margin-top: 22px; font-size: 10px; color: #6b7280; line-height: 1.45; }
+  .page-footer {
+    margin-top: 16px; padding-top: 8px; border-top: 1px solid #f3f4f6;
+    font-size: 10px; color: #9ca3af;
+    display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+${htmlPages}
+<script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script>
+</body>
+</html>`;
+
+            const w = window.open('', '_blank');
+            if (!w) {
+                triggerToast('Please allow pop-ups to download PDF');
+                return;
+            }
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+        };
+
+        const downloadStatement = (format) => {
+            showDownloadMenu.value = false;
+            const rows = buildStatementRows();
+            const summary = buildSummary(rows);
+            const fileId = makeFileId();
+
+            if (format === 'csv') {
+                downloadCsv(rows, summary, fileId);
+                triggerToast(`${accountLabel.value} CSV downloaded`);
+            } else {
+                downloadPdf(rows, summary, fileId);
+                triggerToast(`${accountLabel.value} PDF ready to print/save`);
+            }
         };
 
         return {
+            pageTitle,
             interestSettings,
             isSimpleMode,
+            isNonInterestMode: isNonInterestModeView,
             interestEnabled,
             compoundRateLabel,
             simpleRateLabel,
@@ -599,6 +865,9 @@ export default {
             processDeposit,
             processWithdraw,
             processTransferInterest,
+            showPinModal,
+            onPinConfirm,
+            onPinCancel,
             formatNumber
         };
     }

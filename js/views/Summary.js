@@ -1,7 +1,11 @@
-const { ref } = Vue;
+const { ref, computed } = Vue;
 import { formatNumber, formatShortNumber } from '../utils.js';
-// 引入配置文件
 import { MOCK_SUMMARY_DATA, MOCK_TREND_DATA, MOCK_BRANCH_LIST } from '../config.js';
+import {
+    interestSettings,
+    isSimpleAccrualMode,
+    isNonInterestMode
+} from '../interestSettings.js';
 
 export default {
     template: `
@@ -18,16 +22,19 @@ export default {
 
         <div class="space-y-6">
             <!-- 1. Top Cards Row -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Total Assets Card -->
-                <div class="bg-[#27B665] rounded-xl p-6 text-white shadow-lg shadow-green-100 flex flex-col justify-between min-h-[160px] relative overflow-hidden group">
+            <div class="grid grid-cols-1 gap-6" :class="isNonInterestMode ? '' : 'lg:grid-cols-3'">
+
+                <!-- Total Assets Card (full width in Non-Interest) -->
+                <div class="bg-[#27B665] rounded-xl p-6 text-white shadow-lg shadow-green-100 flex flex-col justify-between min-h-[160px] relative overflow-hidden group"
+                     :class="isNonInterestMode ? 'col-span-1' : 'col-span-1'">
                     <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div class="relative z-10">
                         <div class="text-green-100 text-xs font-medium mb-2">Total Assets (Saving)</div>
                         <div class="text-3xl font-bold tracking-tight">₦ {{ formatNumber(summaryData.totalAssets) }}</div>
                     </div>
-                    <div class="relative z-10 flex items-center justify-between text-xs text-green-50 border-t border-white/20 pt-4 mt-2">
+
+                    <!-- Compound / Non-Interest: OWealth + Fixed -->
+                    <div v-if="!isSimpleMode" class="relative z-10 flex items-center justify-between text-xs text-green-50 border-t border-white/20 pt-4 mt-2">
                         <div class="flex items-center gap-1">
                             <span>OWealth:</span>
                             <span class="font-bold text-white">₦ {{ formatShortNumber(summaryData.owealthBalance) }}</span>
@@ -37,10 +44,23 @@ export default {
                             <span class="font-bold text-white">₦ {{ formatShortNumber(summaryData.fixedBalance) }}</span>
                         </div>
                     </div>
+
+                    <!-- Interest Isolation: OWealth total + Principal/Interest breakdown + Fixed -->
+                    <div v-else class="relative z-10 flex flex-wrap items-center justify-between gap-y-2 gap-x-4 text-xs text-green-50 border-t border-white/20 pt-4 mt-2">
+                        <div class="flex items-center gap-1 flex-wrap">
+                            <span>OWealth:</span>
+                            <span class="font-bold text-white">₦ {{ formatShortNumber(summaryData.owealthBalance) }}</span>
+                            <span class="text-green-100/90">(Principal {{ formatShortNumber(summaryData.owealthPrincipal) }}, Interest {{ formatShortNumber(summaryData.owealthInterest) }})</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span>Fixed:</span>
+                            <span class="font-bold text-white">₦ {{ formatShortNumber(summaryData.fixedBalance) }}</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Yesterday's Interest Card -->
-                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px] hover:shadow-md transition-shadow">
+                <!-- Yesterday's Interest Card (hidden in Non-Interest) -->
+                <div v-if="!isNonInterestMode" class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px] hover:shadow-md transition-shadow">
                     <div>
                         <div class="flex justify-between items-start mb-2">
                             <span class="text-gray-500 text-xs font-medium">Yesterday's Interest</span>
@@ -58,8 +78,8 @@ export default {
                     </div>
                 </div>
 
-                <!-- Total Interest Earned Card -->
-                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px] hover:shadow-md transition-shadow">
+                <!-- Total Interest Earned Card (hidden in Non-Interest) -->
+                <div v-if="!isNonInterestMode" class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px] hover:shadow-md transition-shadow">
                     <div>
                         <div class="flex justify-between items-start mb-2">
                             <span class="text-gray-500 text-xs font-medium">Total Interest Earned</span>
@@ -72,15 +92,14 @@ export default {
                 </div>
             </div>
 
-            <!-- 2. Interest Trend Chart -->
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <!-- 2. Interest Trend Chart (hidden in Non-Interest) -->
+            <div v-if="!isNonInterestMode" class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center mb-8">
                     <h3 class="font-bold text-gray-800 text-base">Interest Trend (7 Days)</h3>
                     <div class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">2026/01/24 - 2026/01/30</div>
                 </div>
-                
+
                 <div class="h-64 w-full flex justify-between gap-2 sm:gap-4 relative px-2">
-                    <!-- Background Grid Lines -->
                     <div class="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 select-none">
                         <div class="border-b border-gray-50 h-0 w-full"></div>
                         <div class="border-b border-gray-50 h-0 w-full"></div>
@@ -88,28 +107,23 @@ export default {
                         <div class="border-b border-gray-50 h-0 w-full"></div>
                     </div>
 
-                    <!-- Bars -->
-                    <div v-for="(day, index) in trendData" :key="index" 
+                    <div v-for="(day, index) in trendData" :key="index"
                          class="flex flex-col items-center flex-1 group relative z-10 cursor-pointer h-full justify-end">
-                        
-                        <!-- Tooltip -->
+
                         <div class="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-[10px] py-1 px-2 rounded pointer-events-none whitespace-nowrap z-20">
                             ₦{{ formatNumber(day.amount) }}
                         </div>
 
-                        <!-- Value Label -->
                         <div v-if="index === trendData.length - 1" class="mb-2 text-xs font-bold text-[#27B665] transition-all group-hover:-translate-y-1">
                             ₦{{ day.amount }}
                         </div>
                         <div v-else class="mb-2 h-4 w-full"></div>
 
-                        <!-- The Bar -->
                         <div class="w-full max-w-[60px] rounded-t-sm transition-all duration-500 ease-out hover:brightness-95"
                              :class="index === trendData.length - 1 ? 'bg-[#27B665]' : 'bg-[#dcfce7] group-hover:bg-[#86efac]'"
                              :style="{ height: (day.amount / maxAmount * 100) + '%' }">
                         </div>
-                        
-                        <!-- X-Axis Label -->
+
                         <div class="mt-3 text-xs text-gray-400 font-medium">{{ day.label }}</div>
                     </div>
                 </div>
@@ -119,14 +133,12 @@ export default {
         <!-- Add Branch Savings Modal -->
         <div v-if="showAddBranchModal" class="modal-mask" @click.self="showAddBranchModal = false">
             <div class="modal-content overflow-hidden !w-[900px] !max-w-[95vw] !rounded-lg">
-                <!-- Header -->
                 <div class="p-5 border-b border-gray-100 flex justify-between items-center">
                     <span class="text-xl font-medium text-gray-800">Add Branch Savings</span>
                     <i class="fa-solid fa-xmark text-gray-400 cursor-pointer hover:text-gray-600 text-lg" @click="showAddBranchModal = false"></i>
                 </div>
-                
+
                 <div class="p-6">
-                    <!-- Filter -->
                     <div class="mb-5">
                         <label class="block text-sm text-gray-500 mb-1.5">Branch</label>
                         <div class="w-72 border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-400 flex justify-between items-center cursor-not-allowed bg-white">
@@ -135,7 +147,6 @@ export default {
                         </div>
                     </div>
 
-                    <!-- Table -->
                     <div class="border border-gray-100 rounded-lg overflow-hidden mb-4">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-gray-50 text-gray-500 font-normal">
@@ -159,7 +170,6 @@ export default {
                         </table>
                     </div>
 
-                    <!-- Pagination Mock -->
                     <div class="flex justify-end items-center text-sm text-gray-500 gap-6 mb-8">
                         <span>Total {{ mockBranchList.length }}</span>
                         <div class="flex gap-2 items-center border border-gray-200 rounded px-2 py-1 bg-white cursor-pointer">50/page <i class="fa-solid fa-chevron-down text-xs ml-1"></i></div>
@@ -172,7 +182,6 @@ export default {
                         </div>
                     </div>
 
-                    <!-- Footer Actions -->
                     <div class="flex justify-end gap-3">
                         <button @click="showAddBranchModal = false" class="px-6 py-2 border border-gray-300 text-gray-600 rounded-md text-sm hover:bg-gray-50 transition-colors">Cancel</button>
                         <button @click="handleSubmit" class="px-6 py-2 bg-[#27B665] text-white rounded-md text-sm font-medium hover:bg-[#219e56] transition-colors shadow-sm shadow-green-100">Submit</button>
@@ -183,27 +192,24 @@ export default {
     </div>
     `,
     setup() {
-        // Use Config Data
         const summaryData = ref(MOCK_SUMMARY_DATA);
         const trendData = ref(MOCK_TREND_DATA);
-        
-        // Filter out branches marked as "isNew" for the Add Modal
         const mockBranchList = ref(MOCK_BRANCH_LIST.filter(b => b.isNew));
+        const maxAmount = 4000;
 
-        const maxAmount = 4000; 
+        const isSimpleMode = computed(() => isSimpleAccrualMode());
+        const isNonInterestModeView = computed(() => isNonInterestMode());
 
-        // Modal Logic
         const showAddBranchModal = ref(false);
 
         const openAddBranchModal = () => {
-            // Reset selection
             mockBranchList.value.forEach(b => b.selected = false);
             showAddBranchModal.value = true;
         };
 
         const handleSubmit = () => {
             showAddBranchModal.value = false;
-            
+
             if (window.ElementPlus && window.ElementPlus.ElMessage) {
                 window.ElementPlus.ElMessage({
                     message: '进入分支开户流程',
@@ -222,6 +228,8 @@ export default {
             maxAmount,
             formatNumber,
             formatShortNumber,
+            isSimpleMode,
+            isNonInterestMode: isNonInterestModeView,
             showAddBranchModal,
             openAddBranchModal,
             mockBranchList,

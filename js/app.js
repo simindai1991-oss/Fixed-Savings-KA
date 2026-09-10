@@ -11,8 +11,9 @@ import ServiceFooter from './components/ServiceFooter.js';
 import FixedSavingsView from './views/FixedSavings.js';
 import SavingsSummaryView from './views/Summary.js';
 import BranchFixedView from './views/BranchFixedSavings.js';
+import BranchOWealthView from './views/BranchOWealth.js';
 import OpenAccountCaseView from './views/OpenAccountCase.js';
-import OWealthView from './views/OWealth.js'; // 引入 OWealth 视图
+import OWealthView from './views/OWealth.js';
 import SettingsView from './views/Settings.js';
 
 const app = createApp({
@@ -29,9 +30,7 @@ const app = createApp({
 
         const handleNavigation = (page) => {
             currentPage.value = page;
-            if (page !== 'fixed-savings-branch') {
-                currentBranchName.value = null;
-            }
+            currentBranchName.value = null;
         };
 
         const handleViewBranch = (branch) => {
@@ -39,25 +38,30 @@ const app = createApp({
             currentPage.value = 'fixed-savings-branch';
         };
 
+        const handleViewBranchOWealth = (branch) => {
+            currentBranchName.value = branch.name;
+            currentPage.value = 'owealth-branch';
+        };
+
         const updateGlobalTime = (newTime) => {
             globalTime.value = newTime;
         };
-        
+
         const currentViewComponent = computed(() => {
-            // 路由映射
             if (currentPage.value === 'fixed-savings' || currentPage.value === 'fixed-savings-branch') return FixedSavingsView;
             if (currentPage.value === 'savings-summary') return SavingsSummaryView;
             if (currentPage.value === 'branch-fixed') return BranchFixedView;
-            if (currentPage.value === 'open-account') return OpenAccountCaseView; 
-            if (currentPage.value === 'owealth') return OWealthView; // 配置 OWealth 路由
+            if (currentPage.value === 'branch-owealth') return BranchOWealthView;
+            if (currentPage.value === 'open-account') return OpenAccountCaseView;
+            if (currentPage.value === 'owealth' || currentPage.value === 'owealth-branch') return OWealthView;
             if (currentPage.value === 'settings') return SettingsView;
-            
+
             return FixedSavingsView;
         });
 
         const currentViewProps = computed(() => {
             const props = { currentTime: globalTime.value };
-            
+
             if (currentPage.value === 'fixed-savings-branch') {
                 props.branchName = currentBranchName.value;
                 props.onBackToList = () => {
@@ -68,13 +72,22 @@ const app = createApp({
             if (currentPage.value === 'branch-fixed') {
                 props.onViewBranch = handleViewBranch;
             }
-            
+            if (currentPage.value === 'branch-owealth') {
+                props.onViewBranch = handleViewBranchOWealth;
+            }
+            if (currentPage.value === 'owealth-branch') {
+                props.branchName = currentBranchName.value;
+                props.onBackToList = () => {
+                    currentPage.value = 'branch-owealth';
+                    currentBranchName.value = null;
+                };
+            }
+
             return props;
         });
 
         let timer;
         onMounted(() => {
-            // 保持时钟空转以维持框架完整性
             timer = setInterval(() => {}, 1000);
         });
 

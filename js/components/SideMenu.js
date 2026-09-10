@@ -1,4 +1,4 @@
-const { ref } = Vue;
+const { ref, watch } = Vue;
 
 export default {
     props: ['currentPage'],
@@ -47,9 +47,13 @@ export default {
             <i class="fa-solid fa-chevron-down text-xs transition-transform" :class="{'rotate-180': open.branch}"></i>
         </div>
         <div class="overflow-hidden transition-all duration-300 ease-in-out bg-white" :style="{ maxHeight: open.branch ? '300px' : '0' }">
-            <div class="pl-[52px] h-10 flex items-center text-[13px] text-gray-600 cursor-pointer hover:text-opay">Branch OWealth</div>
             <div class="pl-[52px] h-10 flex items-center text-[13px] text-gray-600 cursor-pointer hover:text-opay"
-                 :class="{'text-opay font-medium bg-[#f0f9f4]': currentPage === 'branch-fixed'}"
+                 :class="{'text-opay font-medium bg-[#f0f9f4]': currentPage === 'branch-owealth' || currentPage === 'owealth-branch'}"
+                 @click="$emit('navigate', 'branch-owealth')">
+                 Branch OWealth
+            </div>
+            <div class="pl-[52px] h-10 flex items-center text-[13px] text-gray-600 cursor-pointer hover:text-opay"
+                 :class="{'text-opay font-medium bg-[#f0f9f4]': currentPage === 'branch-fixed' || currentPage === 'fixed-savings-branch'}"
                  @click="$emit('navigate', 'branch-fixed')">
                  Branch Fixed Savings
             </div>
@@ -70,14 +74,23 @@ export default {
         </div>
     </div>
     `,
-    setup() {
-        // 退回到您最初提供的且已知好用的逻辑模式
+    setup(props) {
         const open = ref({ saving: true, branch: false, settings: true });
-        
-        const toggle = (key) => { 
-            open.value[key] = !open.value[key]; 
+
+        const toggle = (key) => {
+            open.value[key] = !open.value[key];
         };
-        
+
+        watch(
+            () => props.currentPage,
+            (page) => {
+                if (page === 'branch-owealth' || page === 'branch-fixed' || page === 'owealth-branch' || page === 'fixed-savings-branch') {
+                    open.value.branch = true;
+                }
+            },
+            { immediate: true }
+        );
+
         return { open, toggle };
     }
 }
