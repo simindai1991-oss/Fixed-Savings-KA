@@ -1,14 +1,11 @@
-const { ref, computed, onMounted, watch } = Vue;
+const { ref, computed, onMounted } = Vue;
 import { OWEALTH_COMPOUND_RATE, OWEALTH_SIMPLE_RATE } from '../config.js';
 import {
     interestSettings,
     applyInterestSettings,
     canApplyInterestSettings,
-    hasIsolatedInterestBalance,
-    MODE_SWITCH_BLOCK_MESSAGE,
-    isSimpleAccrualMode
+    MODE_SWITCH_BLOCK_MESSAGE
 } from '../interestSettings.js';
-import PinVerification from '../components/PinVerification.js';
 
 const SETTINGS_TABS = [
     { id: 'payment-pin', label: 'Payment PIN', enabled: false },
@@ -18,7 +15,6 @@ const SETTINGS_TABS = [
 ];
 
 export default {
-    components: { PinVerification },
     template: `
     <div class="fade-in max-w-5xl mx-auto">
         <div class="bg-white rounded-lg border border-gray-200 shadow-sm min-h-[560px] flex flex-col">
@@ -35,35 +31,16 @@ export default {
             </div>
 
             <div class="p-8 flex-1">
-                <div v-if="interestBalanceBlocked"
-                     class="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700 leading-relaxed">
-                    <div class="flex items-start gap-2">
-                        <i class="fa-solid fa-triangle-exclamation mt-0.5 text-orange-500"></i>
-                        <div>
-                            <strong class="block mb-1">Cannot turn off Interest Isolation</strong>
-                            Interest Account balance:
-                            <strong>₦{{ formatMoney(interestSettings.isolatedInterestBalance) }}</strong>.
-                            Please go to <strong>OWealth</strong> and use <strong>Transfer to Principal</strong> before turning off Interest Isolation.
-                            Switching to Non-Interest is still allowed.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Setting A: Interest on / off -->
                 <section class="mb-8">
-                    <h3 class="text-sm font-bold text-gray-800 mb-1">1. Interest Accrual</h3>
-                    <p class="text-xs text-gray-400 mb-4">
-                        Whether savings products accrue interest (applies to both OWealth and Fixed Savings).
-                    </p>
-
+                    <h3 class="text-sm font-bold text-gray-800 mb-4">Interest Accrual</h3>
                     <div class="space-y-3">
                         <div class="block border rounded-lg p-5 transition-all cursor-pointer"
-                             :class="draftInterestEnabled
+                             :class="interestEnabled
                                  ? 'border-opay bg-opay-light shadow-sm'
                                  : 'border-gray-200 hover:border-gray-300 bg-white'"
-                             @click="setInterestEnabled(true)">
+                             @click="requestInterestEnabled(true)">
                             <div class="flex items-start gap-3">
-                                <input type="radio" name="interest-enabled" :checked="draftInterestEnabled"
+                                <input type="radio" name="interest-enabled" :checked="interestEnabled"
                                        class="mt-1 w-4 h-4 accent-[#27B665] pointer-events-none">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 flex-wrap">
@@ -78,23 +55,22 @@ export default {
                         </div>
 
                         <div class="block border rounded-lg p-5 transition-all cursor-pointer"
-                             :class="!draftInterestEnabled
+                             :class="!interestEnabled
                                  ? 'border-opay bg-opay-light shadow-sm'
                                  : 'border-gray-200 hover:border-gray-300 bg-white'"
-                             @click="setInterestEnabled(false)">
+                             @click="requestInterestEnabled(false)">
                             <div class="flex items-start gap-3">
-                                <input type="radio" name="interest-enabled" :checked="!draftInterestEnabled"
+                                <input type="radio" name="interest-enabled" :checked="!interestEnabled"
                                        class="mt-1 w-4 h-4 accent-[#27B665] pointer-events-none">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="text-sm font-medium text-gray-800">Interest Disabled (Non-Interest)</span>
                                     </div>
                                     <p class="text-xs text-gray-500 mt-2 leading-relaxed">
-                                        Neither OWealth nor Fixed Savings will accrue interest. Intended for merchants who do not accept interest (e.g. Islamic finance compliance).
-                                        Independent from OWealth Interest Isolation balance checks.
+                                        Neither OWealth nor Fixed Savings will accrue interest.
                                     </p>
                                     <p class="text-xs text-orange-500 mt-2 leading-relaxed">
-                                        Existing accrued interest remains per policy; no new interest will be generated.
+                                        Existing interest will not be affected; no new interest will be generated.
                                     </p>
                                 </div>
                             </div>
@@ -102,34 +78,22 @@ export default {
                     </div>
                 </section>
 
-                <!-- Setting B: Isolation (only when interest on) -->
-                <section :class="draftInterestEnabled ? '' : 'opacity-50 pointer-events-none'">
-                    <h3 class="text-sm font-bold text-gray-800 mb-1">
-                        2. OWealth Interest Isolation
-                        <span v-if="!draftInterestEnabled" class="text-xs font-normal text-gray-400 ml-2">(available when Interest is Enabled)</span>
-                    </h3>
-                    <p class="text-xs text-gray-400 mb-4">
-                        Separates OWealth principal and interest into different accounts. Applies to OWealth only (not Fixed Savings). Independent from enabling/disabling interest.
-                    </p>
-
+                <section v-if="interestEnabled" class="mb-2">
+                    <h3 class="text-sm font-bold text-gray-800 mb-4">OWealth Interest Isolation</h3>
                     <div class="space-y-3">
                         <div class="block border rounded-lg p-5 transition-all cursor-pointer"
-                             :class="draftInterestEnabled && !draftIsolationEnabled
+                             :class="!isolationEnabled
                                  ? 'border-opay bg-opay-light shadow-sm'
                                  : 'border-gray-200 hover:border-gray-300 bg-white'"
-                             @click="setIsolationEnabled(false)">
+                             @click="requestIsolationEnabled(false)">
                             <div class="flex items-start gap-3">
                                 <input type="radio" name="isolation-enabled"
-                                       :checked="draftInterestEnabled && !draftIsolationEnabled"
+                                       :checked="!isolationEnabled"
                                        class="mt-1 w-4 h-4 accent-[#27B665] pointer-events-none">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="text-sm font-medium text-gray-800">Off — Compound Interest</span>
                                         <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-opay text-white">Recommended</span>
-                                        <span v-if="turnOffIsolationBlocked"
-                                              class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-orange-100 text-orange-600">
-                                            Transfer Interest first
-                                        </span>
                                     </div>
                                     <p class="text-xs text-gray-500 mt-2 leading-relaxed">
                                         Daily interest is auto-credited to OWealth principal and continues to earn interest (compound).
@@ -144,13 +108,13 @@ export default {
                         </div>
 
                         <div class="block border rounded-lg p-5 transition-all cursor-pointer"
-                             :class="draftInterestEnabled && draftIsolationEnabled
+                             :class="isolationEnabled
                                  ? 'border-opay bg-opay-light shadow-sm'
                                  : 'border-gray-200 hover:border-gray-300 bg-white'"
-                             @click="setIsolationEnabled(true)">
+                             @click="requestIsolationEnabled(true)">
                             <div class="flex items-start gap-3">
                                 <input type="radio" name="isolation-enabled"
-                                       :checked="draftInterestEnabled && draftIsolationEnabled"
+                                       :checked="isolationEnabled"
                                        class="mt-1 w-4 h-4 accent-[#27B665] pointer-events-none">
                                 <div class="flex-1">
                                     <div class="text-sm font-medium text-gray-800">On — OWealth Interest Isolation (Simple Interest)</div>
@@ -160,41 +124,37 @@ export default {
                                     </p>
                                     <div class="mt-3 flex items-center gap-4 flex-wrap">
                                         <span class="text-lg font-bold text-gray-700">
-                                            {{ simpleRate }}% <span class="text-xs font-normal text-gray-400">p.a. (pre-tax)</span>
+                                            ≈ {{ simpleRate }}% <span class="text-xs font-normal text-gray-400">p.a. (pre-tax)</span>
                                         </span>
                                     </div>
-                                    <p class="text-xs text-orange-500 mt-3 leading-relaxed">
-                                        Rate is lower than compound because interest is no longer reinvested. This is not a product rate cut — it reflects giving up compound reinvestment for clearer principal/interest separation.
-                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
+            </div>
+        </div>
 
-                <div v-if="draftInterestEnabled" class="mt-6 p-4 bg-opay-light border border-green-100 rounded-lg text-xs text-green-700 leading-relaxed">
-                    <i class="fa-solid fa-circle-info mr-1.5 text-opay"></i>
-                    <strong>Rate note:</strong>
-                    Compound ({{ compoundRate }}% p.a.) vs Isolation ({{ simpleRate }}% p.a.) differs by about
-                    <strong>{{ rateDiff }} bps</strong> over one year, because isolation forgoes reinvestment of daily interest.
-                </div>
-
-                <div class="flex justify-center gap-4 mt-12 pt-6">
-                    <button @click="handleCancel"
-                            class="px-10 py-2.5 rounded border border-opay text-opay text-sm font-medium hover:bg-opay-light transition-colors">
+        <!-- Confirm modal -->
+        <div v-if="showConfirmModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                <h3 class="text-base font-bold text-gray-800 mb-2">Confirm change</h3>
+                <p class="text-sm text-gray-600 leading-relaxed mb-6">{{ confirmMessage }}</p>
+                <div class="flex justify-end gap-3">
+                    <button @click="cancelConfirm"
+                            :disabled="isSubmitting"
+                            class="px-5 py-2 rounded border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-60">
                         Cancel
                     </button>
-                    <button @click="handleSubmit"
+                    <button @click="confirmApply"
                             :disabled="isSubmitting"
-                            class="px-10 py-2.5 rounded bg-opay text-white text-sm font-medium hover:bg-opay-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm shadow-green-100">
-                        <span v-if="!isSubmitting">Submit</span>
-                        <span v-else><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Submitting...</span>
+                            class="px-5 py-2 rounded bg-opay text-white text-sm font-medium hover:bg-opay-dark transition-colors disabled:opacity-60">
+                        <span v-if="!isSubmitting">Confirm</span>
+                        <span v-else><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Saving...</span>
                     </button>
                 </div>
             </div>
         </div>
-
-        <pin-verification v-model="showPinModal" @confirm="onPinConfirm" @cancel="onPinCancel" />
 
         <transition name="fade-slide">
             <div v-if="showToast"
@@ -208,25 +168,19 @@ export default {
     setup() {
         const tabs = SETTINGS_TABS;
         const activeTab = 'interest-setting';
-        const draftInterestEnabled = ref(true);
-        const draftIsolationEnabled = ref(false);
         const isSubmitting = ref(false);
         const showToast = ref(false);
         const toastMessage = ref('');
         const toastIsError = ref(false);
-        const showPinModal = ref(false);
+        const showConfirmModal = ref(false);
+        const confirmMessage = ref('');
+        const pendingPayload = ref(null);
 
         const compoundRate = OWEALTH_COMPOUND_RATE;
         const simpleRate = OWEALTH_SIMPLE_RATE;
-        const rateDiff = computed(() => Math.round((compoundRate - simpleRate) * 100));
 
-        const interestBalanceBlocked = computed(() =>
-            hasIsolatedInterestBalance() && isSimpleAccrualMode()
-        );
-        const turnOffIsolationBlocked = computed(() => interestBalanceBlocked.value);
-
-        const formatMoney = (num) =>
-            new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0);
+        const interestEnabled = computed(() => !!interestSettings.interestEnabled);
+        const isolationEnabled = computed(() => !!interestSettings.isolationEnabled);
 
         const showTip = (message, isError = false) => {
             toastMessage.value = message;
@@ -235,103 +189,100 @@ export default {
             setTimeout(() => { showToast.value = false; }, isError ? 4500 : 3000);
         };
 
-        const syncFromStore = () => {
-            draftInterestEnabled.value = interestSettings.interestEnabled;
-            draftIsolationEnabled.value = interestSettings.isolationEnabled;
-        };
-
-        const draftPayload = () => ({
-            interestEnabled: draftInterestEnabled.value,
-            isolationEnabled: draftInterestEnabled.value ? draftIsolationEnabled.value : false
-        });
-
-        const setInterestEnabled = (enabled) => {
-            // 非息与隔离校验解耦：关闭计息不检查 Interest 余额
-            draftInterestEnabled.value = enabled;
-            if (!enabled) draftIsolationEnabled.value = false;
-        };
-
-        const setIsolationEnabled = (enabled) => {
-            if (!draftInterestEnabled.value) return;
-            if (!enabled && !canApplyInterestSettings({ interestEnabled: true, isolationEnabled: false })) {
-                showTip(MODE_SWITCH_BLOCK_MESSAGE, true);
-                return;
+        const describePayload = (payload) => {
+            if (!payload.interestEnabled) {
+                return 'Switch to Interest Disabled (Non-Interest)? OWealth and Fixed Savings will stop accruing new interest.';
             }
-            draftIsolationEnabled.value = enabled;
-        };
-
-        const handleCancel = () => syncFromStore();
-
-        const handleSubmit = () => {
-            if (!canApplyInterestSettings(draftPayload())) {
-                showTip(MODE_SWITCH_BLOCK_MESSAGE, true);
-                syncFromStore();
-                return;
+            if (payload.isolationEnabled) {
+                return `Turn on OWealth Interest Isolation (Simple Interest, ≈ ${simpleRate}% p.a. pre-tax)?`;
             }
-            showPinModal.value = true;
+            return `Turn off OWealth Interest Isolation and use Compound Interest (${compoundRate}% p.a. pre-tax)?`;
         };
 
-        const applySettings = () => {
-            const payload = draftPayload();
+        const openConfirm = (payload) => {
+            const same =
+                payload.interestEnabled === interestSettings.interestEnabled &&
+                (payload.interestEnabled
+                    ? payload.isolationEnabled === interestSettings.isolationEnabled
+                    : !interestSettings.interestEnabled);
+            if (same) return;
+
+            // 前置判断：利息账户有余额时，禁止关隔离 / 切无息
             if (!canApplyInterestSettings(payload)) {
                 showTip(MODE_SWITCH_BLOCK_MESSAGE, true);
-                syncFromStore();
                 return;
             }
+
+            pendingPayload.value = payload;
+            confirmMessage.value = describePayload(payload);
+            showConfirmModal.value = true;
+        };
+
+        const requestInterestEnabled = (enabled) => {
+            openConfirm({
+                interestEnabled: enabled,
+                isolationEnabled: enabled ? interestSettings.isolationEnabled : false
+            });
+        };
+
+        const requestIsolationEnabled = (enabled) => {
+            if (!interestSettings.interestEnabled) return;
+            openConfirm({
+                interestEnabled: true,
+                isolationEnabled: enabled
+            });
+        };
+
+        const cancelConfirm = () => {
+            if (isSubmitting.value) return;
+            showConfirmModal.value = false;
+            pendingPayload.value = null;
+        };
+
+        const confirmApply = () => {
+            const payload = pendingPayload.value;
+            if (!payload || isSubmitting.value) return;
+
             isSubmitting.value = true;
+            // DEMO：模拟接口提交；余额校验仅在提交时发生
             setTimeout(() => {
                 const ok = applyInterestSettings(payload);
                 isSubmitting.value = false;
+                showConfirmModal.value = false;
+                pendingPayload.value = null;
+
                 if (!ok) {
                     showTip(MODE_SWITCH_BLOCK_MESSAGE, true);
-                    syncFromStore();
                     return;
                 }
+
                 if (!payload.interestEnabled) {
                     showTip('Settings saved: Interest Disabled — OWealth and Fixed Savings will not accrue interest.');
                 } else if (payload.isolationEnabled) {
-                    showTip(`Settings saved: OWealth Interest Isolation On (Simple) at ${simpleRate}% p.a. (pre-tax).`);
+                    showTip(`Settings saved: OWealth Interest Isolation On (Simple) at ≈ ${simpleRate}% p.a. (pre-tax).`);
                 } else {
                     showTip(`Settings saved: Interest Enabled + OWealth Compound at ${compoundRate}% p.a. (pre-tax).`);
                 }
-            }, 500);
+            }, 400);
         };
-
-        const onPinConfirm = () => applySettings();
-        const onPinCancel = () => {};
-
-        watch(
-            () => [interestSettings.interestEnabled, interestSettings.isolationEnabled],
-            () => {
-                // 外部变更时保持草稿同步（DEMO 一般不会）
-            }
-        );
-
-        onMounted(syncFromStore);
 
         return {
             tabs,
             activeTab,
-            draftInterestEnabled,
-            draftIsolationEnabled,
+            interestEnabled,
+            isolationEnabled,
             isSubmitting,
             showToast,
             toastMessage,
             toastIsError,
-            showPinModal,
+            showConfirmModal,
+            confirmMessage,
             compoundRate,
             simpleRate,
-            rateDiff,
-            interestBalanceBlocked,
-            turnOffIsolationBlocked,
-            interestSettings,
-            formatMoney,
-            setInterestEnabled,
-            setIsolationEnabled,
-            handleCancel,
-            handleSubmit,
-            onPinConfirm,
-            onPinCancel
+            requestInterestEnabled,
+            requestIsolationEnabled,
+            cancelConfirm,
+            confirmApply
         };
     }
 };

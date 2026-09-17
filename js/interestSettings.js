@@ -10,12 +10,12 @@ import { OWEALTH_COMPOUND_RATE, OWEALTH_SIMPLE_RATE } from './config.js';
 export const interestSettings = Vue.reactive({
     interestEnabled: true,
     isolationEnabled: false,
-    /** Interest Isolation Account 余额；>0 时仅禁止关闭本息隔离（与是否免息解耦） */
+    /** Interest Isolation Account 余额；>0 时禁止关闭隔离或切换到无息 */
     isolatedInterestBalance: 0
 });
 
 export const MODE_SWITCH_BLOCK_MESSAGE =
-    'Interest Account still has a balance. Please transfer Interest to Principal on the OWealth page before turning off Interest Isolation.';
+    'Interest Account still has a balance. Please transfer Interest to Principal on the OWealth page before turning off Interest Isolation or switching to Non-Interest.';
 
 export function hasIsolatedInterestBalance() {
     return Number(interestSettings.isolatedInterestBalance) > 0;
@@ -23,15 +23,21 @@ export function hasIsolatedInterestBalance() {
 
 /**
  * 目标配置是否允许提交。
- * 仅「关闭本息隔离」且仍保持计息时，要求 Interest 余额为 0。
- * 切换非息（Interest Disabled）不校验利息余额。
+ * - 关闭本息隔离（回 Compound）→ Interest 余额须为 0
+ * - 切换到无息（Interest Disabled）→ Interest 余额须为 0
  */
 export function canApplyInterestSettings({ interestEnabled, isolationEnabled }) {
+    if (!hasIsolatedInterestBalance()) return true;
+
     const turningOffIsolation =
         !!interestEnabled &&
         interestSettings.isolationEnabled &&
         !isolationEnabled;
-    if (turningOffIsolation && hasIsolatedInterestBalance()) {
+    const switchingToNonInterest =
+        interestSettings.interestEnabled &&
+        !interestEnabled;
+
+    if (turningOffIsolation || switchingToNonInterest) {
         return false;
     }
     return true;

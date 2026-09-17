@@ -66,7 +66,6 @@ export default {
                         <div class="relative z-10 mb-6">
                             <div class="flex items-center gap-2 mb-3">
                                 <span class="text-gray-500 text-sm font-medium">Principal Account</span>
-                                <span class="bg-[#27B665]/10 text-[#27B665] px-2 py-0.5 rounded text-xs font-bold">{{ simpleRateLabel }} p.a.</span>
                             </div>
                             <div class="text-[32px] leading-none font-bold text-gray-800">
                                 ₦{{ formatNumber(accountData.principalBalance) }}
