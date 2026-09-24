@@ -190,21 +190,32 @@ export default {
         };
 
         const describePayload = (payload) => {
-            if (!payload.interestEnabled) {
-                return 'Switch to Interest Disabled (Non-Interest)? OWealth and Fixed Savings will stop accruing new interest.';
+            const interestChanged = payload.interestEnabled !== interestSettings.interestEnabled;
+            const isolationChanged = payload.isolationEnabled !== interestSettings.isolationEnabled;
+
+            // 计息开关：与隔离独立，文案只描述 Non-Interest 开/关
+            if (interestChanged && !payload.interestEnabled) {
+                return 'Turn on Non-Interest mode? OWealth and Fixed Savings will stop accruing new interest.';
             }
-            if (payload.isolationEnabled) {
+            if (interestChanged && payload.interestEnabled) {
+                return 'Turn off Non-Interest mode?';
+            }
+
+            // 隔离开关：单独变更
+            if (isolationChanged && payload.isolationEnabled) {
                 return `Turn on OWealth Interest Isolation (Simple Interest, ≈ ${simpleRate}% p.a. pre-tax)?`;
             }
-            return `Turn off OWealth Interest Isolation and use Compound Interest (${compoundRate}% p.a. pre-tax)?`;
+            if (isolationChanged && !payload.isolationEnabled) {
+                return `Turn off OWealth Interest Isolation and use Compound Interest (${compoundRate}% p.a. pre-tax)?`;
+            }
+
+            return 'Confirm this change?';
         };
 
         const openConfirm = (payload) => {
             const same =
                 payload.interestEnabled === interestSettings.interestEnabled &&
-                (payload.interestEnabled
-                    ? payload.isolationEnabled === interestSettings.isolationEnabled
-                    : !interestSettings.interestEnabled);
+                payload.isolationEnabled === interestSettings.isolationEnabled;
             if (same) return;
 
             // 前置判断：利息账户有余额时，禁止关隔离 / 切无息
@@ -219,16 +230,17 @@ export default {
         };
 
         const requestInterestEnabled = (enabled) => {
+            // 关/开利息不改写隔离设置
             openConfirm({
                 interestEnabled: enabled,
-                isolationEnabled: enabled ? interestSettings.isolationEnabled : false
+                isolationEnabled: interestSettings.isolationEnabled
             });
         };
 
         const requestIsolationEnabled = (enabled) => {
             if (!interestSettings.interestEnabled) return;
             openConfirm({
-                interestEnabled: true,
+                interestEnabled: interestSettings.interestEnabled,
                 isolationEnabled: enabled
             });
         };
@@ -243,8 +255,11 @@ export default {
             const payload = pendingPayload.value;
             if (!payload || isSubmitting.value) return;
 
+            const interestChanged = payload.interestEnabled !== interestSettings.interestEnabled;
+            const isolationChanged = payload.isolationEnabled !== interestSettings.isolationEnabled;
+
             isSubmitting.value = true;
-            // DEMO：模拟接口提交；余额校验仅在提交时发生
+            // DEMO：模拟接口提交；余额校验在提交链路再次校验
             setTimeout(() => {
                 const ok = applyInterestSettings(payload);
                 isSubmitting.value = false;
@@ -256,12 +271,16 @@ export default {
                     return;
                 }
 
-                if (!payload.interestEnabled) {
-                    showTip('Settings saved: Interest Disabled — OWealth and Fixed Savings will not accrue interest.');
-                } else if (payload.isolationEnabled) {
+                if (interestChanged && !payload.interestEnabled) {
+                    showTip('Settings saved: Non-Interest mode on — OWealth and Fixed Savings will not accrue interest.');
+                } else if (interestChanged && payload.interestEnabled) {
+                    showTip('Settings saved: Non-Interest mode off.');
+                } else if (isolationChanged && payload.isolationEnabled) {
                     showTip(`Settings saved: OWealth Interest Isolation On (Simple) at ≈ ${simpleRate}% p.a. (pre-tax).`);
+                } else if (isolationChanged && !payload.isolationEnabled) {
+                    showTip(`Settings saved: OWealth Interest Isolation Off — Compound at ${compoundRate}% p.a. (pre-tax).`);
                 } else {
-                    showTip(`Settings saved: Interest Enabled + OWealth Compound at ${compoundRate}% p.a. (pre-tax).`);
+                    showTip('Settings saved.');
                 }
             }, 400);
         };

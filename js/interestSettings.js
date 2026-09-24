@@ -1,9 +1,9 @@
 import { OWEALTH_COMPOUND_RATE, OWEALTH_SIMPLE_RATE } from './config.js';
 
 /**
- * 全局 Interest Setting（两项解耦）
- * - interestEnabled: 是否计息（有利息 / 无利息）
- * - isolationEnabled: 是否本息隔离（仅在计息开启时生效）
+ * 全局 Interest Setting（两项独立配置，互不改写对方）
+ * - interestEnabled: 是否计息（有利息 / 无利息）；关利息不重置 isolationEnabled
+ * - isolationEnabled: 是否本息隔离（仅利息开启时在 UI 展示/可改）
  *   - false → Compound 5%
  *   - true  → Isolation Simple 4.87%
  */
@@ -23,14 +23,13 @@ export function hasIsolatedInterestBalance() {
 
 /**
  * 目标配置是否允许提交。
- * - 关闭本息隔离（回 Compound）→ Interest 余额须为 0
- * - 切换到无息（Interest Disabled）→ Interest 余额须为 0
+ * - 关闭本息隔离 → Interest 余额须为 0
+ * - 切换到无息 → Interest 余额须为 0（不改写隔离开关）
  */
 export function canApplyInterestSettings({ interestEnabled, isolationEnabled }) {
     if (!hasIsolatedInterestBalance()) return true;
 
     const turningOffIsolation =
-        !!interestEnabled &&
         interestSettings.isolationEnabled &&
         !isolationEnabled;
     const switchingToNonInterest =
@@ -52,7 +51,10 @@ export function canSwitchToMode(mode) {
         return canApplyInterestSettings({ interestEnabled: true, isolationEnabled: false });
     }
     if (mode === 'none') {
-        return canApplyInterestSettings({ interestEnabled: false, isolationEnabled: false });
+        return canApplyInterestSettings({
+            interestEnabled: false,
+            isolationEnabled: interestSettings.isolationEnabled
+        });
     }
     return true;
 }
@@ -67,7 +69,8 @@ export function applyInterestSettings(payload) {
         isolationEnabled = payload === 'simple';
     } else {
         interestEnabled = !!payload.interestEnabled;
-        isolationEnabled = interestEnabled ? !!payload.isolationEnabled : false;
+        // 两项独立：关利息不强制清空隔离设置
+        isolationEnabled = !!payload.isolationEnabled;
     }
 
     if (!canApplyInterestSettings({ interestEnabled, isolationEnabled })) {
@@ -78,7 +81,7 @@ export function applyInterestSettings(payload) {
     interestSettings.interestEnabled = interestEnabled;
     interestSettings.isolationEnabled = isolationEnabled;
 
-    // DEMO：首次打开隔离且余额为 0 时写入样例利息
+    // DEMO：首次进入「计息 + 隔离」且余额为 0 时写入样例利息
     if (interestEnabled && isolationEnabled && !wasIsolated && interestSettings.isolatedInterestBalance <= 0) {
         interestSettings.isolatedInterestBalance = 687.25;
     }
